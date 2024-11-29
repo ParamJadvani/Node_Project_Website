@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmailVerification = async (email, subject, html) => {
-  return Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const mailOptions = {
       from: process.env.EMAIL_ADDRESS,
       to: email,

@@ -3,7 +3,15 @@ const JWT = require("jsonwebtoken");
 const SECRET_KEY = process.env.SECRET_KEY;
 
 const GenerateToken = async (data) => {
-  return JWT.sign(data, SECRET_KEY);
+  return new Promise((resolve, reject) => {
+    JWT.sign(data, SECRET_KEY, (err, token) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(token);
+      }
+    });
+  });
 };
 
 const verifiyToken = async (req, res, next) => {
@@ -13,7 +21,19 @@ const verifiyToken = async (req, res, next) => {
       return res.status(401).json({ message: "Token not found" });
     }
     try {
-      const decodeData = await JWT.verify(token, SECRET_KEY);
+      const decodeToken = () => {
+        return new Promise((resolve, reject) => {
+          JWT.verify(token, SECRET_KEY, (err, decoded) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(decoded);
+            }
+          });
+        });
+      };
+
+      const decodeData = await decodeToken();
       if (!decodeData) {
         return res.status(401).json({ message: "InValid Token" });
       }

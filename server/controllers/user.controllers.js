@@ -27,7 +27,10 @@ const SignUp = async (req, res) => {
       return res.status(400).json({ message: "This email is already used." });
 
     const hashedPassword = await bcrypt.hash(password, 11);
-    const profile = req?.files?.path || null;
+    const profile = req?.file?.path || null;
+
+    console.log("request body", req.body);
+    console.log("file", req?.file?.path || null);
 
     const newUser = await User.create({
       username,
@@ -158,4 +161,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { GetUser, SignUp, Login, VerifyEmail,deleteUser };
+module.exports = { GetUser, SignUp, Login, VerifyEmail, deleteUser };

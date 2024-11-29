@@ -6,14 +6,14 @@ const {
   deleteUser,
   GetUser,
 } = require("../controllers/user.controllers");
-const upload = require("../middlewares/multer");
+const upload = require("../utils/multer");
 const isValidateField = require("../middlewares/isValidateField");
 
 const UserRouter = express.Router();
 
 UserRouter.get("/", GetUser);
 
-UserRouter.post("/signup", isValidateField, upload.single("image"), SignUp);
+UserRouter.post("/signup", isValidateField, upload.single("profile"), SignUp);
 
 UserRouter.post("/login", isValidateField, Login);
 
