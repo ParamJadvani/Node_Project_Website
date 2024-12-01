@@ -3,9 +3,7 @@ import Router from "./Components/Router";
 
 const App = () => {
   return (
-    <div
-      style={{ backgroundColor: "white", minHeight: "100vh", color: "black" }}
-    >
+    <div>
       <Router />
     </div>
   );

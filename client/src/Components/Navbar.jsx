@@ -1,73 +1,105 @@
+import React from "react";
 import { Link } from "react-router-dom";
-import { FaHome, FaSignInAlt, FaUserPlus, FaBars } from "react-icons/fa";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+} from "@mui/material";
+import { FaHome, FaSignInAlt, FaUserPlus } from "react-icons/fa";
+import { useTheme } from "@mui/material/styles";
+
+const navLinks = [
+  { to: "/", icon: <FaHome />, text: "Home" },
+  { to: "/login", icon: <FaSignInAlt />, text: "Login" },
+  { to: "/signup/user", icon: <FaUserPlus />, text: "Signup" },
+];
 
 const Navbar = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [openDrawer, setOpenDrawer] = React.useState(false);
+
+  const handleDrawerToggle = () => {
+    setOpenDrawer(!openDrawer);
+  };
+
+  const navLinkItems = (
+    <>
+      {navLinks.map(({ to, icon, text }) => (
+        <ListItem button key={text} component={Link} to={to}>
+          <ListItemIcon>{icon}</ListItemIcon>
+          <ListItemText primary={text} />
+        </ListItem>
+      ))}
+    </>
+  );
+
   return (
-    <div className="navbar bg-white shadow-md">
-      {/* Logo */}
-      <div className="flex-1">
-        <Link to="/" className="text-2xl font-bold text-gray-800">
-          MyApp
-        </Link>
-      </div>
+    <>
+      {/* AppBar */}
+      <AppBar
+        position="sticky"
+        sx={{
+          backgroundColor: "#172831",
+          margin: 0, // Remove any default margin
+          padding: 0, // Remove any default padding
+          top: 0, // Ensure the navbar is at the top
+          zIndex: 1000, // Ensure the navbar is always on top
+        }}
+      >
+        <Toolbar>
+          {/* Logo or title */}
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            MyApp
+          </Typography>
 
-      {/* Links for larger screens */}
-      <div className="hidden lg:flex">
-        <ul className="menu menu-horizontal px-1 space-x-4">
-          <li>
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-gray-800 hover:text-gray-600"
-            >
-              <FaHome /> Home
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/login"
-              className="flex items-center gap-2 text-gray-800 hover:text-gray-600"
-            >
-              <FaSignInAlt /> Login
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/signup/user"
-              className="flex items-center gap-2 text-gray-800 hover:text-gray-600"
-            >
-              <FaUserPlus /> Signup
-            </Link>
-          </li>
-        </ul>
-      </div>
+          {/* Desktop NavLinks */}
+          {!isMobile && (
+            <Box display="flex">
+              {navLinks.map(({ to, icon, text }) => (
+                <IconButton
+                  key={text}
+                  component={Link}
+                  to={to}
+                  sx={{
+                    color: "#fff",
+                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" },
+                    marginRight: "16px",
+                  }}
+                >
+                  {icon}
+                  <Typography variant="body1" sx={{ marginLeft: "8px" }}>
+                    {text}
+                  </Typography>
+                </IconButton>
+              ))}
+            </Box>
+          )}
 
-      {/* Dropdown for smaller screens */}
-      <div className="dropdown dropdown-end lg:hidden">
-        <label tabIndex={0} className="btn btn-ghost">
-          <FaBars className="text-gray-800 h-5 w-5" />
-        </label>
-        <ul
-          tabIndex={0}
-          className="menu menu-sm dropdown-content mt-3 p-2 shadow bg-white rounded-box w-52 text-gray-800"
-        >
-          <li>
-            <Link to="/" className="flex items-center gap-2">
-              <FaHome /> Home
-            </Link>
-          </li>
-          <li>
-            <Link to="/login" className="flex items-center gap-2">
-              <FaSignInAlt /> Login
-            </Link>
-          </li>
-          <li>
-            <Link to="/signup/user" className="flex items-center gap-2">
-              <FaUserPlus /> Signup
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </div>
+          {/* Mobile NavButton (Hamburger) */}
+          {isMobile && (
+            <IconButton color="inherit" onClick={handleDrawerToggle}>
+              <FaHome />
+            </IconButton>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* Drawer for mobile view */}
+      <Drawer anchor="right" open={openDrawer} onClose={handleDrawerToggle}>
+        <Box sx={{ width: 250 }}>
+          <List>{navLinkItems}</List>
+        </Box>
+      </Drawer>
+    </>
   );
 };
 
