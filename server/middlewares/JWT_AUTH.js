@@ -14,7 +14,7 @@ const GenerateToken = async (data) => {
   });
 };
 
-const verifiyToken = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
     if (!token) {
@@ -47,4 +47,4 @@ const verifiyToken = async (req, res, next) => {
   }
 };
 
-module.exports = { GenerateToken, verifiyToken };
+module.exports = { GenerateToken, verifyToken };

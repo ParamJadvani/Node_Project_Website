@@ -1,15 +1,20 @@
 const bcrypt = require("bcrypt");
 const { GenerateToken } = require("../middlewares/JWT_AUTH");
 const User = require("../models/user.model");
-const sendEmailVerification = require("../service/sendMail");
+const sendMailVerification = require("../service/sendMail");
 const { generateOTP, composeVerificationEmail } = require("../helper/helper");
 const JWT = require("jsonwebtoken");
 
 const otps = new Map();
 
-const GetUser = async (req, res) => {
+// Get Users (All Users or Filtered by Role)
+const GetUsers = async (req, res) => {
+  const { role } = req.query; // Use query param to filter by role
+  const filter = role ? { role } : {};
+
   try {
-    const users = await User.find({}, "-hashedPassword");
+    let users = await User.find(filter, "-password");
+    users = users.filter((user) => user.role === "USER");
     res.status(200).json({ message: "Users retrieved successfully", users });
   } catch (error) {
     console.error("Error fetching users:", error.message);
@@ -19,25 +24,24 @@ const GetUser = async (req, res) => {
   }
 };
 
+// SignUp Function
 const SignUp = async (req, res) => {
-  const { username, email, password, number } = req.body;
+  const { username, email, password, number, role } = req.body;
   try {
     const userExists = await User.findOne({ email });
     if (userExists)
       return res.status(400).json({ message: "This email is already used." });
 
-    const hashedPassword = await bcrypt.hash(password, 11);
+    const hashedPassword = await bcrypt.hash(password, 19);
     const profile = req?.file?.path || null;
-
-    console.log("request body", req.body);
-    console.log("file", req?.file?.path || null);
 
     const newUser = await User.create({
       username,
       email,
-      hashedPassword,
+      password: hashedPassword,
       profile,
       number,
+      role,
     });
 
     const tokenData = {
@@ -48,6 +52,7 @@ const SignUp = async (req, res) => {
       profile: newUser.profile,
       isActive: newUser.isActive,
       role: newUser.role,
+      isVerified: newUser.isVerified,
     };
 
     const token = await GenerateToken(tokenData);
@@ -57,12 +62,12 @@ const SignUp = async (req, res) => {
     const subject = "Email Verification";
     const html = composeVerificationEmail(newUser.username, token, otp);
 
-    await sendEmailVerification(newUser.email, subject, html);
+    await sendMailVerification(newUser.email, subject, html);
 
     res.status(201).json({
       message:
         "Account created. Please check your email to verify your account.",
-      user: { ...tokenData, isVerified: newUser.isVerified },
+      user: tokenData,
       token,
     });
   } catch (error) {
@@ -73,6 +78,7 @@ const SignUp = async (req, res) => {
   }
 };
 
+// Login Function
 const Login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -82,7 +88,7 @@ const Login = async (req, res) => {
         .status(404)
         .json({ message: "No account found with this email." });
 
-    const isPasswordValid = await bcrypt.compare(password, user.hashedPassword);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid)
       return res
@@ -97,12 +103,13 @@ const Login = async (req, res) => {
       profile: user.profile,
       isActive: user.isActive,
       role: user.role,
+      isVerified: user.isVerified,
     };
     const token = await GenerateToken(tokenData);
 
     res.status(200).json({
       message: "Login successful! Welcome back.",
-      user: { ...tokenData, isVerified: user.isVerified },
+      user: tokenData,
       token,
     });
   } catch (error) {
@@ -113,36 +120,53 @@ const Login = async (req, res) => {
   }
 };
 
-const VerifyEmail = async (req, res) => {
+// Verify Account (User or Admin)
+const VerifyAccount = async (req, res) => {
   const { token, otp } = req.params;
 
   try {
     const decoded = JWT.verify(token, process.env.SECRET_KEY);
     const { email } = decoded;
 
-    if (otps.get(email) !== otp) {
+    if (otps.get(email) != otp) {
       return res
         .status(400)
         .json({ message: "Invalid OTP. Please try again." });
     }
 
-    await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       decoded._id,
       { isVerified: true },
       { new: true }
     );
 
-    res
-      .status(200)
-      .json({ message: "Email verified successfully! You can now log in." });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const emailSubject =
+      user.role === "ADMIN" ? "Admin Approval" : "Account Verified";
+    const emailBody = `<h1>${user.role} account verified successfully!</h1>`;
+    await sendMailVerification(user.email, emailSubject, emailBody);
+
+    res.status(200).json({
+      message: `${user.role} verified successfully!`,
+      user: {
+        username: user.username,
+        email: user.email,
+        isActive: user.isActive,
+        isVerified: true,
+      },
+    });
   } catch (error) {
-    console.error("Error verifying email:", error.message);
+    console.error("Error verifying account:", error.message);
     res
       .status(500)
       .json({ message: "Something went wrong. Please try again later." });
   }
 };
 
+// Delete User Function
 const deleteUser = async (req, res) => {
   const { id } = req.params;
 
@@ -161,4 +185,63 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { GetUser, SignUp, Login, VerifyEmail, deleteUser };
+const verifyAdminAccount = async () => {
+  const { adminId } = req.params;
+
+  try {
+    const updatedAdmin = await User.findByIdAndUpdate(
+      adminId,
+      { isActive: true },
+      { new: true }
+    );
+
+    const subject = "Account Approved";
+    const html = "<h1>Your account has been approved!</h1>";
+
+    await sendMailVerification(updatedAdmin.email, subject, html);
+
+    res
+      .status(200)
+      .json({ message: "Admin verified successfully.", admin: updatedAdmin });
+  } catch (error) {
+    console.error("Error verifying admin:", error.message);
+    res
+      .status(500)
+      .json({ message: "Something went wrong. Please try again later." });
+  }
+};
+
+const blockAdminAccount = async (req, res) => {
+  const { adminId } = req.params;
+
+  try {
+    const updatedAdmin = await User.findByIdAndUpdate(
+      adminId,
+      { isActive: false },
+      { new: true }
+    );
+    const subject = "Account Blocked";
+    const html = "<h1>Your account has been blocked.</h1>";
+
+    await sendMailVerification(updatedAdmin.email, subject, html);
+
+    res
+      .status(200)
+      .json({ message: "Admin blocked successfully.", admin: updatedAdmin });
+  } catch (error) {
+    console.error("Error blocking admin:", error.message);
+    res
+      .status(500)
+      .json({ message: "Something went wrong. Please try again later." });
+  }
+};
+
+module.exports = {
+  GetUsers,
+  SignUp,
+  Login,
+  VerifyAccount,
+  deleteUser,
+  verifyAdminAccount,
+  blockAdminAccount,
+};
