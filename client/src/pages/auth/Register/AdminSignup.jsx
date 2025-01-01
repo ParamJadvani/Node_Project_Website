@@ -18,6 +18,7 @@ const AdminSignup = () => {
     ? Alert({
         isPending: true,
         type: "pending",
+        message: "Please wait...",
       })
     : null;
 

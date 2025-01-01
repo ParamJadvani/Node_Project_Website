@@ -13,7 +13,7 @@ const upload = require("../utils/multer");
 
 const productRouter = require("express").Router();
 
-productRouter.get("/", verifyToken, isSuperAdmin, getProducts);
+productRouter.get("/", getProducts);
 
 productRouter.get("/adminId", verifyToken, isAdmin, getProductByAdminId);
 

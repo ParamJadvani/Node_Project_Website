@@ -6,8 +6,11 @@ import AdminSignup from "../pages/auth/Register/AdminSignup";
 import Login from "../pages/auth/Login/Login";
 import SuperAdminDashboard from "../pages/superadmin/SuperAdminDashboard";
 import AdminDashBoard from "../pages/admin/AdminDashBoard";
+import { useSelector } from "react-redux";
 
 const Routes = () => {
+  const { user, isLogin, isActive } = useSelector((store) => store.userReducer);
+  console.log(user, isLogin, isActive);
   return (
     <div>
       <ParentRoute>

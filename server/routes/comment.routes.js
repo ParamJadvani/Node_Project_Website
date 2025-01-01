@@ -15,3 +15,5 @@ commentRouter.post("/", verifyToken, createComment);
 commentRouter.patch("/", verifyToken, updateComment);
 
 commentRouter.delete("/", verifyToken, deleteComment);
+
+module.exports = commentRouter;
