@@ -37,10 +37,12 @@ const UserSignup = () => {
     } catch (error) {
       Alert({
         show: true,
+        type: "error",
+        message: error.toString(),
         title: "Error",
-        text: `Signup failed: ${error.message}`,
-        icon: "error",
+        showConfirmButton: true, // Explicitly set to true
         confirmButtonText: "Try Again",
+        isPending: false, // Ensure isPending is false when the button should appear
       });
     }
   };

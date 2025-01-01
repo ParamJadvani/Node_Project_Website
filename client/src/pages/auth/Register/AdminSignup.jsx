@@ -32,14 +32,16 @@ const AdminSignup = () => {
         title: "Success!",
         timer: 3000,
       });
-      navigate("/");
+      navigate("/admin/Dashboard");
     } catch (error) {
-      // Show error alert using SweetAlert
       Alert({
         type: "error",
-        message: `Signup failed: ${error.message}`,
+        message: error.toString() || "Signup Failed!",
         title: "Error",
-        timer: 3000, // Auto-close after 3 seconds
+        timer: 3000,
+        showConfirmButton: true, // Explicitly set to true
+        confirmButtonText: "Try Again",
+        isPending: false, // Ensure isPending is false when the button should appear
       });
     }
   };

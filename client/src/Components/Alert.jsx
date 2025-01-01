@@ -4,8 +4,10 @@ import {
   FaExclamationCircle,
   FaInfoCircle,
   FaHourglassStart,
+  FaTimesCircle, // Cross icon for error
 } from "react-icons/fa";
 import { renderToString } from "react-dom/server";
+import { CheckCircle as CheckCircleIcon } from "@mui/icons-material"; // MUI for success
 
 const Alert = ({
   type,
@@ -25,11 +27,11 @@ const Alert = ({
     switch (type) {
       case "success":
         return renderToString(
-          <FaCheckCircle style={{ color: "green", fontSize: "48px" }} />
+          <CheckCircleIcon style={{ color: "green", fontSize: "48px" }} />
         );
       case "error":
         return renderToString(
-          <FaExclamationCircle style={{ color: "red", fontSize: "48px" }} />
+          <FaTimesCircle style={{ color: "red", fontSize: "48px" }} />
         );
       case "info":
         return renderToString(
@@ -50,7 +52,7 @@ const Alert = ({
       html: `
         <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
           ${getIconHtml()}
-          <p>${message || ""}</p>
+          <p>${message}</p>
         </div>
       `,
       confirmButtonText,
@@ -61,13 +63,12 @@ const Alert = ({
       showConfirmButton: isPending ? false : showConfirmButton, // Hide confirm button for pending
       allowOutsideClick: !isPending, // Prevent closing on click if pending
       didOpen: isPending ? () => Swal.showLoading() : null, // Attach loading if pending
-      preConfirm: onConfirm,
-      preCancel: onCancel,
+      // preConfirm: onConfirm,
+      // preCancel: onCancel,
     };
 
     Swal.fire(config);
   };
-
   showAlert();
 
   return null; // SweetAlert2 is called directly, so no visual component is needed

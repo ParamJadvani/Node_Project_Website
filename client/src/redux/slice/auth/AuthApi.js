@@ -1,6 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import API from "../../../config/Api.js";
-import { removeCookies, setToken } from "../../../utils/Cookies.js";
+import {
+  decodeToken,
+  getToken,
+  removeCookies,
+  setToken,
+} from "../../../utils/Cookies.js";
 
 const createAccount = createAsyncThunk(
   "user/create",
@@ -11,11 +16,11 @@ const createAccount = createAsyncThunk(
           "Content-Type": "multipart/form-data",
         },
       });
-      setToken(res.data);
-      delete res.data.user.isActive;
+      setToken(res.data.token);
+      res.data.isActive = res.data.user.isActive;
       return res.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -34,15 +39,18 @@ const loginAccount = createAsyncThunk(
         return rejectWithValue("Your account is not activated.");
       }
     } catch (error) {
-      rejectWithValue(error.message);
+      rejectWithValue(error.response.data.message);
     }
   }
 );
 
+const token = getToken();
+const data = token ? decodeToken(token) : null;
+
 const intialState = {
-  user: {},
-  isLogin: false,
-  isActive: true,
+  user: data ? data : {},
+  isLogin: !!data,
+  isActive: data ? data.isActive : true,
   isLoading: false,
   error: null,
 };

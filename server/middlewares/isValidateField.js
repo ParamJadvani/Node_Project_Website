@@ -6,4 +6,15 @@ const isValidateField = (req, res, next) => {
   else return res.status(402).json({ message: "Invalid email address" });
 };
 
-module.exports = isValidateField;
+const isExistFields = (req, res, next) => {
+  // Validate required fields
+  if (!title || !description || !price || !category || !InStockQty) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+  next();
+};
+
+module.exports = {
+  isValidateField,
+  isExistFields,
+};

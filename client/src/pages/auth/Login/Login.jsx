@@ -19,6 +19,7 @@ const Login = () => {
     ? Alert({
         isPending: true,
         type: "pending",
+        message: "Please wait...",
       })
     : null;
 
@@ -33,16 +34,20 @@ const Login = () => {
         title: "Welcome Back",
         timer: 3000,
       });
-      // user.role === "SUPERADMIN"
-      //   ? navigate("/superAdmin/Dashboard")
-      //   : navigate("/");
-      navigate("/superAdmin/Dashboard");
+      user.role === "SUPERADMIN"
+        ? navigate("/superAdmin/Dashboard")
+        : user.role === "ADMIN"
+          ? navigate("/admin/Dashboard")
+          : navigate("/");
     } catch (error) {
       Alert({
         type: "error",
-        message: error.message || "Login failed!",
+        message: error.toString() || "Login failed!",
         title: "Error",
         timer: 3000,
+        showConfirmButton: true, // Explicitly set to true
+        confirmButtonText: "Try Again",
+        isPending: false, // Ensure isPending is false when the button should appear
       });
     }
   };

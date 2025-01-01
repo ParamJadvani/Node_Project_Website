@@ -9,7 +9,7 @@ const {
   blockAdminAccount,
 } = require("../controllers/user.controllers");
 const upload = require("../utils/multer");
-const isValidateField = require("../middlewares/isValidateField");
+const { isValidateField } = require("../middlewares/isValidateField");
 const { verifyToken } = require("../middlewares/JWT_AUTH");
 const { isSuperAdmin } = require("../middlewares/role");
 

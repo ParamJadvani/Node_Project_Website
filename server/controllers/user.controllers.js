@@ -9,18 +9,24 @@ const otps = new Map();
 
 // Get Users (All Users or Filtered by Role)
 const GetUsers = async (req, res) => {
-  const { role } = req.query; // Use query param to filter by role
+  const { role } = req.query;
   const filter = role ? { role } : {};
 
   try {
     let users = await User.find(filter, "-password");
     users = users.filter((user) => user.role === "USER");
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found." });
+    }
+
     res.status(200).json({ message: "Users retrieved successfully", users });
   } catch (error) {
     console.error("Error fetching users:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
@@ -29,8 +35,9 @@ const SignUp = async (req, res) => {
   const { username, email, password, number, role } = req.body;
   try {
     const userExists = await User.findOne({ email });
-    if (userExists)
+    if (userExists) {
       return res.status(400).json({ message: "This email is already used." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 19);
     const profile = req?.file?.path || null;
@@ -72,9 +79,10 @@ const SignUp = async (req, res) => {
     });
   } catch (error) {
     console.error("Error during sign-up:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
@@ -83,17 +91,16 @@ const Login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res
         .status(404)
         .json({ message: "No account found with this email." });
+    }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid)
-      return res
-        .status(401)
-        .json({ message: "Wrong email or password. Please try again." });
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Wrong email or password." });
+    }
 
     const tokenData = {
       _id: user._id,
@@ -105,6 +112,7 @@ const Login = async (req, res) => {
       role: user.role,
       isVerified: user.isVerified,
     };
+
     const token = await GenerateToken(tokenData);
 
     res.status(200).json({
@@ -114,9 +122,10 @@ const Login = async (req, res) => {
     });
   } catch (error) {
     console.error("Error during login:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
@@ -128,7 +137,7 @@ const VerifyAccount = async (req, res) => {
     const decoded = JWT.verify(token, process.env.SECRET_KEY);
     const { email } = decoded;
 
-    if (otps.get(email) != otp) {
+    if (otps.get(email) !== otp) {
       return res
         .status(400)
         .json({ message: "Invalid OTP. Please try again." });
@@ -160,9 +169,10 @@ const VerifyAccount = async (req, res) => {
     });
   } catch (error) {
     console.error("Error verifying account:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
@@ -172,20 +182,23 @@ const deleteUser = async (req, res) => {
 
   try {
     const user = await User.findByIdAndDelete(id);
-    if (!user)
+    if (!user) {
       return res
         .status(404)
         .json({ message: "User not found. Please check the user ID." });
+    }
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
-const verifyAdminAccount = async () => {
+// Verify Admin Account
+const verifyAdminAccount = async (req, res) => {
   const { adminId } = req.params;
 
   try {
@@ -194,10 +207,12 @@ const verifyAdminAccount = async () => {
       { isActive: true },
       { new: true }
     );
+    if (!updatedAdmin) {
+      return res.status(404).json({ message: "Admin not found." });
+    }
 
     const subject = "Account Approved";
     const html = "<h1>Your account has been approved!</h1>";
-
     await sendMailVerification(updatedAdmin.email, subject, html);
 
     res
@@ -205,12 +220,14 @@ const verifyAdminAccount = async () => {
       .json({ message: "Admin verified successfully.", admin: updatedAdmin });
   } catch (error) {
     console.error("Error verifying admin:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
+// Block Admin Account
 const blockAdminAccount = async (req, res) => {
   const { adminId } = req.params;
 
@@ -220,9 +237,12 @@ const blockAdminAccount = async (req, res) => {
       { isActive: false },
       { new: true }
     );
+    if (!updatedAdmin) {
+      return res.status(404).json({ message: "Admin not found." });
+    }
+
     const subject = "Account Blocked";
     const html = "<h1>Your account has been blocked.</h1>";
-
     await sendMailVerification(updatedAdmin.email, subject, html);
 
     res
@@ -230,9 +250,10 @@ const blockAdminAccount = async (req, res) => {
       .json({ message: "Admin blocked successfully.", admin: updatedAdmin });
   } catch (error) {
     console.error("Error blocking admin:", error.message);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+      error: error.message,
+    });
   }
 };
 
