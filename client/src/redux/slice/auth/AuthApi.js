@@ -7,6 +7,17 @@ import {
   setToken,
 } from "../../../utils/Cookies.js";
 
+const token = getToken();
+const data = token ? decodeToken(token) : null;
+
+const intialState = {
+  user: data ? data : {},
+  isLogin: !!data,
+  isActive: data ? data.isActive : true,
+  isLoading: false,
+  error: null,
+};
+
 const createAccount = createAsyncThunk(
   "user/create",
   async (signupData, { rejectWithValue }) => {
@@ -43,17 +54,6 @@ const loginAccount = createAsyncThunk(
     }
   }
 );
-
-const token = getToken();
-const data = token ? decodeToken(token) : null;
-
-const intialState = {
-  user: data ? data : {},
-  isLogin: !!data,
-  isActive: data ? data.isActive : true,
-  isLoading: false,
-  error: null,
-};
 
 const userSlice = createSlice({
   name: "user",

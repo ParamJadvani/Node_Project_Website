@@ -53,7 +53,6 @@ const getProductByAdminId = async (req, res) => {
   const userId = req.user._id;
 
   try {
-
     const products = await Product.find({ user: userId });
     if (!products || products.length === 0) {
       return res
@@ -76,8 +75,6 @@ const createProduct = async (req, res) => {
   const user = req.user._id;
 
   try {
-  
-
     const product = await Product.create({
       title,
       description,
@@ -146,6 +143,7 @@ const deleteProduct = async (req, res) => {
 
     res.status(200).json({
       message: "Product deleted successfully.",
+      product,
     });
   } catch (error) {
     res.status(500).json({

@@ -237,7 +237,19 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
 
   // Open/Close Modals
-  const handleOpenCreateModal = () => setIsCreateModalOpen(true);
+  const handleOpenCreateModal = () => {
+    // Reset the form to its initial state
+    setproductData({
+      name: "",
+      price: "",
+      image: "",
+      inStock: "",
+      category: "",
+      description: "",
+    });
+    setIsCreateModalOpen(true); // Open the modal
+  };
+
   const handleCloseCreateModal = () => setIsCreateModalOpen(false);
 
   const handleOpenEditModal = (product) => {

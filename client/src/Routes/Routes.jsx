@@ -6,20 +6,35 @@ import AdminSignup from "../pages/auth/Register/AdminSignup";
 import Login from "../pages/auth/Login/Login";
 import SuperAdminDashboard from "../pages/superadmin/SuperAdminDashboard";
 import AdminDashBoard from "../pages/admin/AdminDashBoard";
-import { useSelector } from "react-redux";
+import PrivateRoute from "./PrivateRoute";
 
 const Routes = () => {
-  const { user, isLogin, isActive } = useSelector((store) => store.userReducer);
-  console.log(user, isLogin, isActive);
   return (
     <div>
       <ParentRoute>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/signup/user" element={<UserSignup />} />
         <Route path="/signup/admin" element={<AdminSignup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/superAdmin/Dashboard" element={<SuperAdminDashboard />} />
-        <Route path="/admin/Dashboard" element={<AdminDashBoard />} />
+
+        {/* Private Routes */}
+        <Route
+          path="/superAdmin/Dashboard"
+          element={
+            <PrivateRoute allowedRoles={["SUPERADMIN"]}>
+              <SuperAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/Dashboard"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <AdminDashBoard />
+            </PrivateRoute>
+          }
+        />
       </ParentRoute>
     </div>
   );

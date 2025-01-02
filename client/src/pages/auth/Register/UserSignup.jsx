@@ -19,7 +19,8 @@ const UserSignup = () => {
     ? Alert({
         isPending: true,
         type: "pending",
-        message: "Please wait...",
+        title: "Please Wait...",
+        message: "Please wait for joining with us...",
       })
     : null;
 

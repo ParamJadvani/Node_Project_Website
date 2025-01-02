@@ -36,7 +36,8 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "Inter, Poppins, sans-serif", // Clean sans-serif font
+    fontFamily:
+      "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif", // Clean sans-serif font
     h1: {
       fontWeight: 700,
       fontSize: "2.5rem",

@@ -1,18 +1,17 @@
 import Swal from "sweetalert2";
 import {
   FaCheckCircle,
-  FaExclamationCircle,
+  FaTimesCircle,
   FaInfoCircle,
-  FaHourglassStart,
-  FaTimesCircle, // Cross icon for error
+  FaSmile,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { renderToString } from "react-dom/server";
-import { CheckCircle as CheckCircleIcon } from "@mui/icons-material"; // MUI for success
 
 const Alert = ({
   type,
   message,
-  title,
+  title = undefined,
   confirmButtonText,
   cancelButtonText,
   showCancelButton,
@@ -24,22 +23,28 @@ const Alert = ({
   isPending = false,
 }) => {
   const getIconHtml = () => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "success":
         return renderToString(
-          <CheckCircleIcon style={{ color: "green", fontSize: "48px" }} />
+          <FaCheckCircle style={{ color: "#28a745", fontSize: "60px" }} />
         );
       case "error":
         return renderToString(
-          <FaTimesCircle style={{ color: "red", fontSize: "48px" }} />
+          <FaTimesCircle style={{ color: "#dc3545", fontSize: "60px" }} />
         );
       case "info":
         return renderToString(
-          <FaInfoCircle style={{ color: "blue", fontSize: "48px" }} />
+          <FaInfoCircle style={{ color: "#17a2b8", fontSize: "60px" }} />
         );
       case "pending":
         return renderToString(
-          <FaHourglassStart style={{ color: "gray", fontSize: "48px" }} />
+          <FaSmile style={{ color: "#007bff", fontSize: "60px" }} /> // Smile with blue color
+        );
+      case "warning":
+        return renderToString(
+          <FaExclamationTriangle
+            style={{ color: "#ffc107", fontSize: "60px" }}
+          />
         );
       default:
         return "";
@@ -48,30 +53,39 @@ const Alert = ({
 
   const showAlert = () => {
     const config = {
-      title: title || type.charAt(0).toUpperCase() + type.slice(1),
       html: `
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-          ${getIconHtml()}
-          <p>${message}</p>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">
+          ${
+            title || type
+              ? `<h1 style="color: black; font-size: 30px; font-weight: bolder; text-transform: capitalize; text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); font-family:'Courier New', Courier, monospace;">
+                  ${title || type}
+                </h1>`
+              : ""
+          }
+          <div>
+            ${getIconHtml()}
+          </div>
+          <p style="color: black; font-size: 20px; font-weight: 700; text-align: center; line-height: 1.6; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">
+            ${message}
+          </p>
         </div>
       `,
-      confirmButtonText,
+      confirmButtonText: confirmButtonText || "OK",
       cancelButtonText,
       showCancelButton,
       customClass: customStyle,
       timer,
-      showConfirmButton: isPending ? false : showConfirmButton, // Hide confirm button for pending
-      allowOutsideClick: !isPending, // Prevent closing on click if pending
-      didOpen: isPending ? () => Swal.showLoading() : null, // Attach loading if pending
-      // preConfirm: onConfirm,
-      // preCancel: onCancel,
+      showConfirmButton: isPending ? false : showConfirmButton,
+      allowOutsideClick: !isPending,
+      didOpen: isPending ? () => Swal.showLoading() : null,
     };
 
     Swal.fire(config);
   };
+
   showAlert();
 
-  return null; // SweetAlert2 is called directly, so no visual component is needed
+  return null;
 };
 
 export default Alert;

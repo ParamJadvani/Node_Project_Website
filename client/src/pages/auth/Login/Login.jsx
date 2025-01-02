@@ -13,41 +13,49 @@ const Login = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const { isLoading, user } = useSelector((store) => store.userReducer);
 
-  isLoading
-    ? Alert({
-        isPending: true,
-        type: "pending",
-        message: "Please wait...",
-      })
-    : null;
+  if (isLoading) {
+    Alert({
+      isPending: true,
+      type: "pending",
+      title: "Please Wait...",
+      message: "Please wait for joining with us...",
+    });
+  }
 
   // Handle Login Submit
   const handleLoginSubmit = async (data) => {
     try {
-      await dispatch(loginAccount(data)).unwrap();
+      // Dispatch the login action and get the updated user data
+      const { user } = await dispatch(loginAccount(data)).unwrap();
+
       // Show Success SweetAlert
       Alert({
         type: "success",
         message: "Login successful!",
-        title: "Welcome Back",
+        title: `Welcome Back, ${user.username || "User"}`,
         timer: 3000,
       });
-      user.role === "SUPERADMIN"
-        ? navigate("/superAdmin/Dashboard")
-        : user.role === "ADMIN"
-          ? navigate("/admin/Dashboard")
-          : navigate("/");
+
+      // Navigate based on the user's role
+      if (user.role === "SUPERADMIN") {
+        navigate("/superAdmin/Dashboard");
+      } else if (user.role === "ADMIN") {
+        navigate("/admin/Dashboard");
+      } else {
+        navigate("/"); // Default fallback
+      }
     } catch (error) {
       Alert({
         type: "error",
         message: error.toString() || "Login failed!",
         title: "Error",
         timer: 3000,
-        showConfirmButton: true, // Explicitly set to true
+        showConfirmButton: true,
         confirmButtonText: "Try Again",
-        isPending: false, // Ensure isPending is false when the button should appear
+        isPending: false,
       });
     }
   };
