@@ -28,6 +28,7 @@ const createAccount = createAsyncThunk(
         },
       });
       setToken(res.data.token);
+      console.log(res);
       res.data.isActive = res.data.user.isActive;
       return res.data;
     } catch (error) {
@@ -99,6 +100,7 @@ const userSlice = createSlice({
   },
 });
 
+const userReducer = userSlice.reducer;
 export const { logout } = userSlice.actions;
 export { createAccount, loginAccount };
-export const userReducer = userSlice.reducer;
+export default userReducer;

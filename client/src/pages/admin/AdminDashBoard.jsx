@@ -8,10 +8,10 @@ import {
   Grid,
   InputAdornment,
   IconButton,
-  Input,
   FormControl,
   InputLabel,
   FormHelperText,
+  Input,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import {
@@ -23,6 +23,8 @@ import {
   Category,
   Inventory,
 } from "@mui/icons-material";
+import { useDispatch } from "react-redux";
+import { createProduct } from "../../redux/slice/product/ProductApi";
 
 const ProductModel = ({
   open,
@@ -40,192 +42,170 @@ const ProductModel = ({
     }));
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files.length > 0) {
+      setProductData({
+        ...productData,
+        image: e.target.files[0], // File object for FormData
+      });
+    }
+  };
+
   return (
-    <>
-      {/* Create Product Modal*/}
-      <Modal open={open} onClose={onClose}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-            width: 700, // Increased width for a larger form
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            {isEditMode ? "Edit Product" : "Create New Product"}
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Product Name"
-                variant="outlined"
-                name="name"
-                value={productData.name}
-                onChange={handleInputChange}
-                required
-                sx={{
-                  input: { fontSize: 18, padding: "15px" }, // Increased padding and font size
-                  borderRadius: "8px", // Rounded corners for better style
-                }}
-                placeholder="Enter product name"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Image />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Price"
-                variant="outlined"
-                name="price"
-                value={productData.price}
-                onChange={handleInputChange}
-                type="number"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PriceCheck />
-                    </InputAdornment>
-                  ),
-                }}
-                required
-                sx={{
-                  input: { fontSize: 18, padding: "15px" },
-                  borderRadius: "8px",
-                }}
-                placeholder="Enter product price"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="image">Product Image</InputLabel>
-                <Input
-                  id="image"
-                  type="file"
-                  name="image"
-                  onChange={(e) => {
-                    setProductData({
-                      ...productData,
-                      image: URL.createObjectURL(e.target.files[0]),
-                    });
-                  }}
-                  required
-                  sx={{ fontSize: 18, padding: "15px" }}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <Image />
-                    </InputAdornment>
-                  }
-                />
-                <FormHelperText sx={{ fontSize: 14 }}>
-                  Upload an image for the product
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="In Stock Quantity"
-                variant="outlined"
-                name="inStock"
-                value={productData.inStock}
-                onChange={handleInputChange}
-                type="number"
-                required
-                sx={{
-                  input: { fontSize: 18, padding: "15px" },
-                  borderRadius: "8px",
-                }}
-                placeholder="Enter stock quantity"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Inventory />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Category"
-                variant="outlined"
-                name="category"
-                value={productData.category}
-                onChange={handleInputChange}
-                required
-                sx={{
-                  input: { fontSize: 18, padding: "15px" },
-                  borderRadius: "8px",
-                }}
-                placeholder="Enter product category"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Category />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                variant="outlined"
-                name="description"
-                value={productData.description}
-                onChange={handleInputChange}
-                multiline
-                rows={4}
-                required
-                sx={{
-                  input: { fontSize: 18, padding: "15px" },
-                  borderRadius: "8px",
-                }}
-                placeholder="Enter product description"
-              />
-            </Grid>
+    <Modal open={open} onClose={onClose}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          bgcolor: "background.paper",
+          p: 4,
+          borderRadius: 2,
+          boxShadow: 24,
+          width: 700,
+        }}
+      >
+        <Typography variant="h6" gutterBottom>
+          {isEditMode ? "Edit Product" : "Create New Product"}
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Product Name"
+              variant="outlined"
+              name="title"
+              value={productData.title}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter product name"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Image />
+                  </InputAdornment>
+                ),
+              }}
+            />
           </Grid>
-          <Box sx={{ mt: 2, textAlign: "right" }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onSubmit}
-              sx={{ fontSize: "16px", padding: "10px 20px" }}
-            >
-              {isEditMode ? "Update Product" : "Create Product"}
-            </Button>
-          </Box>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Price"
+              variant="outlined"
+              name="price"
+              value={productData.price}
+              onChange={handleInputChange}
+              type="number"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PriceCheck />
+                  </InputAdornment>
+                ),
+              }}
+              required
+              placeholder="Enter product price"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel htmlFor="image">Product Image</InputLabel>
+              <Input
+                id="image"
+                type="file"
+                name="image"
+                onChange={handleFileChange}
+                required
+                sx={{ fontSize: 18, padding: "15px" }}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <Image />
+                  </InputAdornment>
+                }
+              />
+              <FormHelperText sx={{ fontSize: 14 }}>
+                Upload an image for the product
+              </FormHelperText>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="In Stock Quantity"
+              variant="outlined"
+              name="InStockQty"
+              value={productData.InStockQty}
+              onChange={handleInputChange}
+              type="number"
+              required
+              placeholder="Enter stock quantity"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Inventory />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Category"
+              variant="outlined"
+              name="category"
+              value={productData.category}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter product category"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Category />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Description"
+              variant="outlined"
+              name="description"
+              value={productData.description}
+              onChange={handleInputChange}
+              multiline
+              rows={4}
+              required
+              placeholder="Enter product description"
+            />
+          </Grid>
+        </Grid>
+        <Box sx={{ mt: 2, textAlign: "right" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onSubmit}
+            sx={{ fontSize: "16px", padding: "10px 20px" }}
+          >
+            {isEditMode ? "Update Product" : "Create Product"}
+          </Button>
         </Box>
-      </Modal>
-    </>
+      </Box>
+    </Modal>
   );
 };
 
-const productGrid = ({ products, onEdit, onDelete }) => {};
-
 const AdminDashboard = () => {
-  const loggedInAdmin = "Admin A"; // Replace with dynamic logic as needed
-
-  const [productData, setproductData] = useState({
-    name: "",
+  const dispatch = useDispatch();
+  const [productData, setProductData] = useState({
+    title: "",
     price: "",
-    image: "",
-    inStock: "",
+    image: null, // File object
+    InStockQty: "",
     category: "",
     description: "",
   });
@@ -233,86 +213,93 @@ const AdminDashboard = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [allproducts, setAllProducts] = useState([]);
 
-  const [products, setProducts] = useState([]);
-
-  // Open/Close Modals
   const handleOpenCreateModal = () => {
-    // Reset the form to its initial state
-    setproductData({
-      name: "",
+    setProductData({
+      title: "",
       price: "",
-      image: "",
-      inStock: "",
+      image: null,
+      InStockQty: "",
       category: "",
       description: "",
     });
-    setIsCreateModalOpen(true); // Open the modal
+    setIsCreateModalOpen(true);
   };
 
   const handleCloseCreateModal = () => setIsCreateModalOpen(false);
 
-  const handleOpenEditModal = (product) => {
-    setSelectedProduct(product);
-    setproductData(product);
-    setIsEditModalOpen(true);
-  };
-  const handleCloseEditModal = () => {
-    setSelectedProduct(null);
-    setIsEditModalOpen(false);
-  };
-
-  // Handle Change in Input Fields
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setproductData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  // Handle Product Creation
   const handleCreateProduct = () => {
+    dispatch(createProduct(productData));
     const newProduct = {
+      id: Date.now(),
       ...productData,
-      id: products.length + 1, // auto-generated product ID
     };
-    setProducts([...products, newProduct]);
-    setproductData({
-      name: "",
+
+    setAllProducts([...allproducts, newProduct]);
+    setProductData({
+      title: "",
       price: "",
-      image: "",
-      inStock: "",
+      image: null,
+      InStockQty: "",
       category: "",
       description: "",
     });
     setIsCreateModalOpen(false);
   };
 
-  // Handle Product Update
-  const handleUpdateProduct = () => {
-    setProducts(
-      products.map((product) =>
-        product.id === selectedProduct.id
-          ? { ...product, ...productData }
-          : product
+  const handleEditProduct = async () => {
+    const updatedProduct = {
+      ...selectedProduct,
+      ...productData,
+      image: productData.image || selectedProduct.image, // Keep existing image if not changed
+    };
+
+    // Update the product in the state
+    setAllProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === updatedProduct.id ? updatedProduct : product
       )
     );
-    setIsEditModalOpen(false);
+
+    // Reset form and close modal
+    setProductData({
+      title: "",
+      price: "",
+      image: null,
+      InStockQty: "",
+      category: "",
+      description: "",
+    });
     setSelectedProduct(null);
+    setIsEditModalOpen(false);
   };
 
-  // Handle Product Deletion
+  // Open the edit modal and populate the fields
+  const handleOpenEditModal = (product) => {
+    setSelectedProduct(product);
+    setProductData({
+      title: product.title,
+      price: product.price,
+      image: null, // To allow new image uploads
+      InStockQty: product.InStockQty,
+      category: product.category,
+      description: product.description,
+    });
+    setIsEditModalOpen(true);
+  };
+
   const handleDeleteProduct = (id) => {
-    setProducts(products.filter((product) => product.id !== id));
+    setAllProducts((prevProducts) =>
+      prevProducts.filter((product) => product.id !== id)
+    );
   };
 
-  // Columns for MUI X DataGrid
   const columns = [
-    { field: "name", headerName: "Product Name", width: 200 },
+    { field: "title", headerName: "Product Name", width: 200 },
     { field: "price", headerName: "Price", width: 150 },
     { field: "category", headerName: "Category", width: 150 },
-    { field: "inStock", headerName: "In Stock", width: 150 },
+    { field: "InStockQty", headerName: "In Stock", width: 150 },
     {
       field: "actions",
       headerName: "Actions",
@@ -351,30 +338,26 @@ const AdminDashboard = () => {
           Create New Product
         </Button>
       </Box>
-
-      {/* MUI X DataGrid for Product List */}
       <Box sx={{ height: 400, width: "100%" }}>
-        <DataGrid rows={products} columns={columns} pageSize={5} />
+        <DataGrid rows={allproducts} columns={columns} pageSize={5} />
       </Box>
-
-      {/* Create Product Modal */}
       <ProductModel
         open={isCreateModalOpen}
         onClose={handleCloseCreateModal}
         productData={productData}
-        setProductData={setproductData}
+        setProductData={setProductData}
         onSubmit={handleCreateProduct}
       />
-
-      {/* Edit Product Modal */}
-      <ProductModel
-        open={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        productData={productData}
-        setProductData={setproductData}
-        onSubmit={handleUpdateProduct}
-        isEditMode={true}
-      />
+      {selectedProduct && (
+        <ProductModel
+          open={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          productData={productData}
+          setProductData={setProductData}
+          onSubmit={handleEditProduct} // Use handleEditProduct for editing
+          isEditMode={true}
+        />
+      )}
     </Box>
   );
 };

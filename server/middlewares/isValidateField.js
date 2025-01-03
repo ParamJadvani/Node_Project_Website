@@ -8,6 +8,7 @@ const isValidateField = (req, res, next) => {
 
 const isExistFields = (req, res, next) => {
   // Validate required fields
+  const { title, description, price, category, InStockQty } = req.body;
   if (!title || !description || !price || !category || !InStockQty) {
     return res.status(400).json({ message: "All fields are required." });
   }

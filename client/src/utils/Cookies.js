@@ -8,7 +8,7 @@ export const getToken = () => {
 };
 
 export const setToken = (token) => {
-  Cookies.set("token", token, { expires: 1 / 24 });
+  Cookies.set("token", token, { expires: 1 });
 };
 
 // Remove a specific key from cookies

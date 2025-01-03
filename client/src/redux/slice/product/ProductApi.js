@@ -24,11 +24,7 @@ const getProductById = createAsyncThunk(
   "product/getProductById",
   async (productId, { rejectWithValue }) => {
     try {
-      const res = await API.get(`/product/${productId}`, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      const res = await API.get(`/product/${productId}`);
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);
@@ -40,11 +36,7 @@ const getProductByAdminId = createAsyncThunk(
   "product/getByAdminId",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get("/product/adminId", {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      const res = await API.get("/product/adminId");
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);
@@ -56,12 +48,14 @@ const createProduct = createAsyncThunk(
   "product/create",
   async (productData, { rejectWithValue }) => {
     try {
+      console.log(productData);
       const res = await API.post("/product", productData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${getToken()}`,
         },
       });
+      console.log(res);
       return res.data.product;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);
@@ -90,11 +84,7 @@ const deleteProduct = createAsyncThunk(
   "product/delete",
   async (productId, { rejectWithValue }) => {
     try {
-      const res = await API.delete(`/product/${productId}`, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      const res = await API.delete(`/product/${productId}`);
       return res.data.product;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);
@@ -103,7 +93,7 @@ const deleteProduct = createAsyncThunk(
 );
 
 const productSlice = createSlice({
-  instialState: intialState,
+  initialState: intialState,
   name: "products",
   reducers: {},
   extraReducers: (builder) => {
@@ -170,3 +160,15 @@ const productSlice = createSlice({
       });
   },
 });
+
+const productReducer = productSlice.reducer;
+
+export default productReducer;
+export {
+  getAllProducts,
+  getProductById,
+  getProductByAdminId,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+};
