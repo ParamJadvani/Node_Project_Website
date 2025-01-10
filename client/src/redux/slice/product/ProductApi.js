@@ -64,14 +64,9 @@ const createProduct = createAsyncThunk(
 
 const updateProduct = createAsyncThunk(
   "product/update",
-  async (productData, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     try {
-      const res = await API.patch(`/product/${productData.id}`, productData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      const res = await API.patch(`/product/${id}`, data);
       return res.data.product;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);

@@ -1,393 +1,449 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box,
+  AppBar,
+  Toolbar,
   Typography,
-  Button,
-  TextField,
-  Modal,
-  Grid,
-  InputAdornment,
   IconButton,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Input,
+  Drawer,
+  Box,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Button,
+  CssBaseline,
+  Grid,
+  Modal,
+  TextField,
+  Card,
+  CardContent,
+  CardActions,
+  InputAdornment,
+  Avatar,
+  Divider,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
 import {
-  Edit,
-  Delete,
-  AddCircle,
-  Image,
-  PriceCheck,
-  Category,
-  Inventory,
+  Menu as MenuIcon,
+  AddCircle as AddCircleIcon,
+  ListAlt as ListAltIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Image as ImageIcon,
+  Inventory as InventoryIcon,
+  Person as PersonIcon,
+  ExitToApp as ExitToAppIcon,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createProduct,
+  updateProduct,
   getProductByAdminId,
+  deleteProduct,
 } from "../../redux/slice/product/ProductApi";
-import { decodeToken, getToken } from "../../utils/Cookies";
-
-const ProductModel = ({
-  open,
-  onClose,
-  onSubmit,
-  productData,
-  setProductData,
-  isEditMode = false,
-}) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProductData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files.length > 0) {
-      setProductData({
-        ...productData,
-        image: e.target.files[0],
-      });
-    }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          bgcolor: "background.paper",
-          p: 4,
-          borderRadius: 2,
-          boxShadow: 24,
-          width: 700,
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
-          {isEditMode ? "Edit Product" : "Create New Product"}
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Product Name"
-              variant="outlined"
-              name="title"
-              value={productData.title}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter product name"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Image />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Price"
-              variant="outlined"
-              name="price"
-              value={productData.price}
-              onChange={handleInputChange}
-              type="number"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PriceCheck />
-                  </InputAdornment>
-                ),
-              }}
-              required
-              placeholder="Enter product price"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel htmlFor="image">Product Image</InputLabel>
-              <Input
-                id="image"
-                type="file"
-                name="image"
-                onChange={handleFileChange}
-                sx={{ fontSize: 18, padding: "15px" }}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <Image />
-                  </InputAdornment>
-                }
-              />
-              <FormHelperText sx={{ fontSize: 14 }}>
-                Upload an image for the product
-              </FormHelperText>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="In Stock Quantity"
-              variant="outlined"
-              name="InStockQty"
-              value={productData.InStockQty}
-              onChange={handleInputChange}
-              type="number"
-              required
-              placeholder="Enter stock quantity"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Inventory />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Category"
-              variant="outlined"
-              name="category"
-              value={productData.category}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter product category"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Category />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              variant="outlined"
-              name="description"
-              value={productData.description}
-              onChange={handleInputChange}
-              multiline
-              rows={4}
-              required
-              placeholder="Enter product description"
-            />
-          </Grid>
-        </Grid>
-        <Box sx={{ mt: 2, textAlign: "right" }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={onSubmit}
-            sx={{ fontSize: "16px", padding: "10px 20px" }}
-          >
-            {isEditMode ? "Update Product" : "Create Product"}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
-  );
-};
+import { logout } from "../../redux/slice/auth/AuthApi";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.productReducer);
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState("Create Product");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [productData, setProductData] = useState({
     title: "",
     price: "",
-    image: null, // File object
-    InStockQty: "",
     category: "",
     description: "",
+    image: null,
+    InStockQty: "",
   });
-
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [allproducts, setAllProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
-    const token = getToken();
-    const data = token ? decodeToken(token) : null;
-
-    if (data) {
-      dispatch(getProductByAdminId())
-        .unwrap()
-        .then((products) => {
-          setAllProducts(products);
-        })
-        .catch((error) => {
-          console.error("Error fetching products:", error);
-        });
-    }
+    dispatch(getProductByAdminId())
+      .unwrap()
+      .then((products) => setAllProducts(products))
+      .catch((error) => console.error("Error fetching products:", error));
   }, [dispatch]);
 
-  const handleOpenCreateModal = () => {
-    setProductData({
-      title: "",
-      price: "",
-      image: null,
-      InStockQty: "",
-      category: "",
-      description: "",
-    });
-    setIsCreateModalOpen(true);
-  };
-
-  const handleCloseCreateModal = () => setIsCreateModalOpen(false);
-
   const handleCreateProduct = async () => {
-    const formData = new FormData();
-    formData.append("title", productData.title);
-    formData.append("price", productData.price);
-    formData.append("image", productData.image);
-    formData.append("InStockQty", productData.InStockQty);
-    formData.append("category", productData.category);
-    formData.append("description", productData.description);
-
     try {
+      const formData = new FormData();
+      Object.entries(productData).forEach(([key, value]) =>
+        formData.append(key, value)
+      );
+
       const result = await dispatch(createProduct(formData)).unwrap();
-
-      setAllProducts((prevProducts) => [...prevProducts, result]);
-
+      setAllProducts((prev) => [...prev, result]);
       setProductData({
         title: "",
         price: "",
-        image: null,
-        InStockQty: "",
         category: "",
         description: "",
+        image: null,
+        InStockQty: "",
       });
-      setIsCreateModalOpen(false);
     } catch (error) {
       console.error("Error creating product:", error);
     }
   };
 
   const handleEditProduct = async () => {
-    const formData = new FormData();
-    formData.append("title", productData.title);
-    formData.append("price", productData.price);
-    formData.append("image", productData.image || selectedProduct.image);
-    formData.append("InStockQty", productData.InStockQty);
-    formData.append("category", productData.category);
-    formData.append("description", productData.description);
+    try {
+      const product = {
+        id: selectedProduct._id,
+        data: productData,
+      };
 
-    const updatedProduct = {
-      ...selectedProduct,
-      ...productData,
-    };
-
-    setAllProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === updatedProduct.id ? updatedProduct : product
-      )
-    );
-
-    setProductData({
-      title: "",
-      price: "",
-      image: null,
-      InStockQty: "",
-      category: "",
-      description: "",
-    });
-    setSelectedProduct(null);
-    setIsEditModalOpen(false);
+      const updatedProduct = await dispatch(updateProduct(product)).unwrap();
+      setAllProducts((prev) =>
+        prev.map((product) =>
+          product._id === updatedProduct._id ? updatedProduct : product
+        )
+      );
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
   };
 
-  const handleOpenEditModal = (product) => {
-    setSelectedProduct(product);
-    setProductData({
-      title: product.title,
-      price: product.price,
-      image: null,
-      InStockQty: product.InStockQty,
-      category: product.category,
-      description: product.description,
-    });
-    setIsEditModalOpen(true);
+  const renderCreateProductForm = (isEditMode = false) => (
+    <Box
+      sx={{
+        maxWidth: 600,
+        mx: "auto",
+        p: 3,
+        bgcolor: "background.paper",
+        borderRadius: 2,
+        boxShadow: 3,
+      }}
+    >
+      <Typography variant="h5" gutterBottom sx={{ color: "#172831" }}>
+        {isEditMode ? "Edit Product" : "Create New Product"}
+      </Typography>
+      <Grid container spacing={2}>
+        {/* Existing form fields */}
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Product Name"
+            variant="outlined"
+            name="title"
+            value={productData.title}
+            onChange={(e) =>
+              setProductData({ ...productData, title: e.target.value })
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <AddCircleIcon sx={{ color: "#172831" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Price"
+            variant="outlined"
+            name="price"
+            type="number"
+            value={productData.price}
+            onChange={(e) =>
+              setProductData({ ...productData, price: e.target.value })
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <InventoryIcon sx={{ color: "#172831" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Category"
+            variant="outlined"
+            name="category"
+            value={productData.category}
+            onChange={(e) =>
+              setProductData({ ...productData, category: e.target.value })
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <ListAltIcon sx={{ color: "#172831" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Description"
+            variant="outlined"
+            name="description"
+            multiline
+            rows={3}
+            value={productData.description}
+            onChange={(e) =>
+              setProductData({ ...productData, description: e.target.value })
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EditIcon sx={{ color: "#172831" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="In Stock Quantity"
+            variant="outlined"
+            name="InStockQty"
+            type="number"
+            value={productData.InStockQty}
+            onChange={(e) =>
+              setProductData({ ...productData, InStockQty: e.target.value })
+            }
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <InventoryIcon sx={{ color: "#172831" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        {!isEditMode && (
+          <Grid item xs={12}>
+            <Button
+              fullWidth
+              variant="outlined"
+              component="label"
+              startIcon={<ImageIcon sx={{ color: "#172831" }} />}
+              sx={{
+                backgroundColor: "#eaf2f8",
+                "&:hover": {
+                  backgroundColor: "#d1e4f0",
+                },
+              }}
+            >
+              Upload Image
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) =>
+                  setProductData({ ...productData, image: e.target.files[0] })
+                }
+              />
+            </Button>
+          </Grid>
+        )}
+        <Grid item xs={12}>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={isEditMode ? handleEditProduct : handleCreateProduct}
+          >
+            {isEditMode ? "Update Product" : "Create Product"}
+          </Button>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  const renderViewProducts = () => (
+    <Grid container spacing={3}>
+      {allProducts.map((product) => (
+        <Grid item xs={12} sm={6} md={4} lg={3} key={product._id}>
+          <Card
+            sx={{
+              boxShadow: 3,
+              borderRadius: 2,
+              bgcolor: "#fff",
+              height: "100%",
+            }}
+          >
+            {/* Image Section */}
+            {product.image && (
+              <img
+                src={API_URL + "/" + product.image}
+                alt={product.title}
+                style={{
+                  width: "100%",
+                  height: "200px",
+                  objectFit: "cover",
+                  borderTopLeftRadius: "8px",
+                  borderTopRightRadius: "8px",
+                }}
+              />
+            )}
+
+            {/* Content Section */}
+            <CardContent sx={{ padding: "16px" }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "#172831", fontWeight: 600, mb: 1 }}
+              >
+                {product.title}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#5c6bc0", mb: 1 }}>
+                Price:{" "}
+                <span style={{ color: "#388e3c", fontWeight: "bold" }}>
+                  ${product.price}
+                </span>
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#8e99f3", mb: 1 }}>
+                Category: {product.category}
+              </Typography>
+            </CardContent>
+
+            {/* Action Buttons */}
+            <CardActions
+              sx={{ justifyContent: "space-between", padding: "16px" }}
+            >
+              <Button
+                startIcon={<EditIcon />}
+                onClick={() => {
+                  setSelectedProduct(product);
+                  setProductData({
+                    title: product.title,
+                    price: product.price,
+                    category: product.category,
+                    description: product.description,
+                    InStockQty: product.InStockQty,
+                  });
+                  setIsEditModalOpen(true);
+                }}
+                sx={{
+                  color: "#1e88e5",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "#e3f2fd",
+                  },
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                startIcon={<DeleteIcon />}
+                color="error"
+                sx={{
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "#ffebee",
+                  },
+                }}
+                onClick={() => dispatch(deleteProduct(product._id))}
+              >
+                Delete
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
   };
 
-  const handleDeleteProduct = (id) => {
-    setAllProducts((prevProducts) =>
-      prevProducts.filter((product) => product.id !== id)
-    );
-  };
-
-  const columns = [
-    { field: "title", headerName: "Product Name", width: 200 },
-    { field: "price", headerName: "Price", width: 150 },
-    { field: "InStockQty", headerName: "In Stock Quantity", width: 180 },
-    { field: "category", headerName: "Category", width: 180 },
-    { field: "description", headerName: "Description", width: 300 },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 250,
-      renderCell: (params) => (
-        <>
-          <IconButton onClick={() => handleOpenEditModal(params.row)}>
-            <Edit />
-          </IconButton>
-          <IconButton onClick={() => handleDeleteProduct(params.row.id)}>
-            <Delete />
-          </IconButton>
-        </>
-      ),
-    },
-  ];
+  const renderDrawer = () => (
+    <Drawer
+      open={isDrawerOpen}
+      onClose={toggleDrawer}
+      sx={{
+        "& .MuiDrawer-paper": {
+          width: 240,
+          backgroundColor: "#172831",
+          color: "white",
+        },
+      }}
+    >
+      <Box sx={{ width: 250 }} role="presentation">
+        <List>
+          <ListItem button onClick={() => setCurrentPage("Create Product")}>
+            <ListItemIcon>
+              <AddCircleIcon sx={{ color: "white" }} />
+            </ListItemIcon>
+            <ListItemText primary="Create Product" sx={{ color: "white" }} />
+          </ListItem>
+          <ListItem button onClick={() => setCurrentPage("View Products")}>
+            <ListItemIcon>
+              <ListAltIcon sx={{ color: "white" }} />
+            </ListItemIcon>
+            <ListItemText primary="View Products" sx={{ color: "white" }} />
+          </ListItem>
+          <Divider sx={{ borderColor: "white" }} />
+          <ListItem button onClick={() => {}}>
+            <ListItemIcon>
+              <PersonIcon sx={{ color: "white" }} />
+            </ListItemIcon>
+            <ListItemText primary="Profile" sx={{ color: "white" }} />
+          </ListItem>
+          <ListItem button onClick={() => {}}>
+            <ListItemIcon>
+              <ExitToAppIcon sx={{ color: "white" }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Logout"
+              sx={{ color: "white" }}
+              onClick={() => dispatch(logout())}
+            />
+          </ListItem>
+        </List>
+      </Box>
+    </Drawer>
+  );
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "space-between", p: 3 }}>
-        <Typography variant="h4">Admin Dashboard</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddCircle />}
-          onClick={handleOpenCreateModal}
+      <CssBaseline />
+      <AppBar position="sticky" sx={{ backgroundColor: "#172831" }}>
+        <Toolbar>
+          <IconButton edge="start" color="inherit" onClick={toggleDrawer}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Admin Dashboard
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      {renderDrawer()}
+      <Box sx={{ p: 3, backgroundColor: "#f7f7f7" }}>
+        {currentPage === "Create Product"
+          ? renderCreateProductForm()
+          : renderViewProducts()}
+      </Box>
+
+      {/* Edit Modal */}
+      <Modal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <Box
+          sx={{
+            p: 3,
+            maxWidth: 600,
+            mx: "auto",
+            bgcolor: "white",
+            borderRadius: 2,
+          }}
         >
-          Create Product
-        </Button>
-      </Box>
-      <Box sx={{ height: 500, width: "100%" }}>
-        <DataGrid
-          rows={allproducts}
-          columns={columns}
-          pageSize={5}
-          getRowId={(row) => row._id}
-          disableSelectionOnClick
-        />
-      </Box>
-      <ProductModel
-        open={isCreateModalOpen}
-        onClose={handleCloseCreateModal}
-        onSubmit={handleCreateProduct}
-        productData={productData}
-        setProductData={setProductData}
-      />
-      <ProductModel
-        open={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSubmit={handleEditProduct}
-        productData={productData}
-        setProductData={setProductData}
-        isEditMode
-      />
+          {renderCreateProductForm(true)} {/* Pass 'true' for Edit Mode */}
+        </Box>
+      </Modal>
     </>
   );
 };
