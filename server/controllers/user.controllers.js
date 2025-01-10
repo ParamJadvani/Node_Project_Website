@@ -6,6 +6,7 @@ const { generateOTP, composeVerificationEmail } = require("../helper/helper");
 const JWT = require("jsonwebtoken");
 
 const otps = new Map();
+const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
 
 // Get Users (All Users or Filtered by Role)
 const GetUsers = async (req, res) => {
@@ -22,7 +23,6 @@ const GetUsers = async (req, res) => {
 
     res.status(200).json({ message: "Users retrieved successfully", users });
   } catch (error) {
-    console.error("Error fetching users:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -39,7 +39,7 @@ const SignUp = async (req, res) => {
       return res.status(400).json({ message: "This email is already used." });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 19);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const profile = req?.file?.path || null;
 
     const newUser = await User.create({
@@ -69,7 +69,12 @@ const SignUp = async (req, res) => {
     const subject = "Email Verification";
     const html = composeVerificationEmail(newUser.username, token, otp);
 
-    await sendMailVerification(newUser.email, subject, html);
+    sendMailVerification(newUser.email, subject, html).catch((error) => {
+      res.status(500).json({
+        message: "Something went wrong. Please try again later.",
+        error: error.message,
+      });
+    });
 
     res.status(201).json({
       message:
@@ -78,7 +83,6 @@ const SignUp = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Error during sign-up:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -121,7 +125,6 @@ const Login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Error during login:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -156,7 +159,12 @@ const VerifyAccount = async (req, res) => {
     const emailSubject =
       user.role === "ADMIN" ? "Admin Approval" : "Account Verified";
     const emailBody = `<h1>${user.role} account verified successfully!</h1>`;
-    await sendMailVerification(user.email, emailSubject, emailBody);
+    sendMailVerification(user.email, emailSubject, emailBody).catch((error) => {
+      res.status(500).json({
+        message: "Something went wrong. Please try again later.",
+        error: error.message,
+      });
+    });
 
     res.status(200).json({
       message: `${user.role} verified successfully!`,
@@ -168,7 +176,6 @@ const VerifyAccount = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error verifying account:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -189,7 +196,6 @@ const deleteUser = async (req, res) => {
     }
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
-    console.error("Error deleting user:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -213,13 +219,17 @@ const verifyAdminAccount = async (req, res) => {
 
     const subject = "Account Approved";
     const html = "<h1>Your account has been approved!</h1>";
-    await sendMailVerification(updatedAdmin.email, subject, html);
+    sendMailVerification(updatedAdmin.email, subject, html).catch((error) => {
+      res.status(500).json({
+        message: "Something went wrong. Please try again later.",
+        error: error.message,
+      });
+    });
 
     res
       .status(200)
       .json({ message: "Admin verified successfully.", admin: updatedAdmin });
   } catch (error) {
-    console.error("Error verifying admin:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,
@@ -249,7 +259,6 @@ const blockAdminAccount = async (req, res) => {
       .status(200)
       .json({ message: "Admin blocked successfully.", admin: updatedAdmin });
   } catch (error) {
-    console.error("Error blocking admin:", error.message);
     res.status(500).json({
       message: "Something went wrong. Please try again later.",
       error: error.message,

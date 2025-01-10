@@ -72,9 +72,11 @@ const getProductByAdminId = async (req, res) => {
 const createProduct = async (req, res) => {
   const { title, description, price, category, InStockQty } = req.body;
   const image = req?.file?.path;
+  console.log(req.file, req.file.path);
   const user = req.user._id;
 
   try {
+    console.log(req.body, image, user);
     const product = await Product.create({
       title,
       description,
@@ -84,6 +86,8 @@ const createProduct = async (req, res) => {
       InStockQty,
       user,
     });
+
+    console.log(product);
 
     res.status(201).json({
       message: "Product created successfully.",

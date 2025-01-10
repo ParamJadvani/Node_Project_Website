@@ -23,8 +23,8 @@ productRouter.post(
   "/",
   verifyToken,
   isAdmin,
-  isExistFields,
   upload.single("image"),
+  isExistFields,
   createProduct
 );
 

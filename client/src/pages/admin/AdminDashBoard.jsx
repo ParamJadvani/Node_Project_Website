@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -23,8 +23,12 @@ import {
   Category,
   Inventory,
 } from "@mui/icons-material";
-import { useDispatch } from "react-redux";
-import { createProduct } from "../../redux/slice/product/ProductApi";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createProduct,
+  getProductByAdminId,
+} from "../../redux/slice/product/ProductApi";
+import { decodeToken, getToken } from "../../utils/Cookies";
 
 const ProductModel = ({
   open,
@@ -46,7 +50,7 @@ const ProductModel = ({
     if (e.target.files.length > 0) {
       setProductData({
         ...productData,
-        image: e.target.files[0], // File object for FormData
+        image: e.target.files[0],
       });
     }
   };
@@ -117,7 +121,6 @@ const ProductModel = ({
                 type="file"
                 name="image"
                 onChange={handleFileChange}
-                required
                 sx={{ fontSize: 18, padding: "15px" }}
                 startAdornment={
                   <InputAdornment position="start">
@@ -201,6 +204,7 @@ const ProductModel = ({
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
+  const { products } = useSelector((state) => state.productReducer);
   const [productData, setProductData] = useState({
     title: "",
     price: "",
@@ -214,6 +218,22 @@ const AdminDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [allproducts, setAllProducts] = useState([]);
+
+  useEffect(() => {
+    const token = getToken();
+    const data = token ? decodeToken(token) : null;
+
+    if (data) {
+      dispatch(getProductByAdminId())
+        .unwrap()
+        .then((products) => {
+          setAllProducts(products);
+        })
+        .catch((error) => {
+          console.error("Error fetching products:", error);
+        });
+    }
+  }, [dispatch]);
 
   const handleOpenCreateModal = () => {
     setProductData({
@@ -229,40 +249,54 @@ const AdminDashboard = () => {
 
   const handleCloseCreateModal = () => setIsCreateModalOpen(false);
 
-  const handleCreateProduct = () => {
-    dispatch(createProduct(productData));
-    const newProduct = {
-      id: Date.now(),
-      ...productData,
-    };
+  const handleCreateProduct = async () => {
+    const formData = new FormData();
+    formData.append("title", productData.title);
+    formData.append("price", productData.price);
+    formData.append("image", productData.image);
+    formData.append("InStockQty", productData.InStockQty);
+    formData.append("category", productData.category);
+    formData.append("description", productData.description);
 
-    setAllProducts([...allproducts, newProduct]);
-    setProductData({
-      title: "",
-      price: "",
-      image: null,
-      InStockQty: "",
-      category: "",
-      description: "",
-    });
-    setIsCreateModalOpen(false);
+    try {
+      const result = await dispatch(createProduct(formData)).unwrap();
+
+      setAllProducts((prevProducts) => [...prevProducts, result]);
+
+      setProductData({
+        title: "",
+        price: "",
+        image: null,
+        InStockQty: "",
+        category: "",
+        description: "",
+      });
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error("Error creating product:", error);
+    }
   };
 
   const handleEditProduct = async () => {
+    const formData = new FormData();
+    formData.append("title", productData.title);
+    formData.append("price", productData.price);
+    formData.append("image", productData.image || selectedProduct.image);
+    formData.append("InStockQty", productData.InStockQty);
+    formData.append("category", productData.category);
+    formData.append("description", productData.description);
+
     const updatedProduct = {
       ...selectedProduct,
       ...productData,
-      image: productData.image || selectedProduct.image, // Keep existing image if not changed
     };
 
-    // Update the product in the state
     setAllProducts((prevProducts) =>
       prevProducts.map((product) =>
         product.id === updatedProduct.id ? updatedProduct : product
       )
     );
 
-    // Reset form and close modal
     setProductData({
       title: "",
       price: "",
@@ -275,13 +309,12 @@ const AdminDashboard = () => {
     setIsEditModalOpen(false);
   };
 
-  // Open the edit modal and populate the fields
   const handleOpenEditModal = (product) => {
     setSelectedProduct(product);
     setProductData({
       title: product.title,
       price: product.price,
-      image: null, // To allow new image uploads
+      image: null,
       InStockQty: product.InStockQty,
       category: product.category,
       description: product.description,
@@ -298,24 +331,19 @@ const AdminDashboard = () => {
   const columns = [
     { field: "title", headerName: "Product Name", width: 200 },
     { field: "price", headerName: "Price", width: 150 },
-    { field: "category", headerName: "Category", width: 150 },
-    { field: "InStockQty", headerName: "In Stock", width: 150 },
+    { field: "InStockQty", headerName: "In Stock Quantity", width: 180 },
+    { field: "category", headerName: "Category", width: 180 },
+    { field: "description", headerName: "Description", width: 300 },
     {
       field: "actions",
       headerName: "Actions",
-      width: 180,
+      width: 250,
       renderCell: (params) => (
         <>
-          <IconButton
-            color="primary"
-            onClick={() => handleOpenEditModal(params.row)}
-          >
+          <IconButton onClick={() => handleOpenEditModal(params.row)}>
             <Edit />
           </IconButton>
-          <IconButton
-            color="secondary"
-            onClick={() => handleDeleteProduct(params.row.id)}
-          >
+          <IconButton onClick={() => handleDeleteProduct(params.row.id)}>
             <Delete />
           </IconButton>
         </>
@@ -324,41 +352,43 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Admin Dashboard
-      </Typography>
-      <Box sx={{ mb: 3 }}>
+    <>
+      <Box sx={{ display: "flex", justifyContent: "space-between", p: 3 }}>
+        <Typography variant="h4">Admin Dashboard</Typography>
         <Button
           variant="contained"
           color="primary"
-          onClick={handleOpenCreateModal}
           startIcon={<AddCircle />}
+          onClick={handleOpenCreateModal}
         >
-          Create New Product
+          Create Product
         </Button>
       </Box>
-      <Box sx={{ height: 400, width: "100%" }}>
-        <DataGrid rows={allproducts} columns={columns} pageSize={5} />
+      <Box sx={{ height: 500, width: "100%" }}>
+        <DataGrid
+          rows={allproducts}
+          columns={columns}
+          pageSize={5}
+          getRowId={(row) => row._id}
+          disableSelectionOnClick
+        />
       </Box>
       <ProductModel
         open={isCreateModalOpen}
         onClose={handleCloseCreateModal}
+        onSubmit={handleCreateProduct}
         productData={productData}
         setProductData={setProductData}
-        onSubmit={handleCreateProduct}
       />
-      {selectedProduct && (
-        <ProductModel
-          open={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          productData={productData}
-          setProductData={setProductData}
-          onSubmit={handleEditProduct} // Use handleEditProduct for editing
-          isEditMode={true}
-        />
-      )}
-    </Box>
+      <ProductModel
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditProduct}
+        productData={productData}
+        setProductData={setProductData}
+        isEditMode
+      />
+    </>
   );
 };
 
