@@ -7,20 +7,33 @@ import Login from "../pages/auth/Login/Login";
 import SuperAdminDashboard from "../pages/superadmin/SuperAdminDashboard";
 import AdminDashBoard from "../pages/admin/AdminDashBoard";
 import PrivateRoute from "./PrivateRoute";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import Alert from "../components/Alert";
+import { logout } from "../redux/slice/auth/AuthApi";
 
 const Routes = () => {
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.userReducer);
+  const { user, isActive } = useSelector((state) => state.userReducer);
+  const dispatch = useDispatch();
   useEffect(() => {
-    if (user.role === "SUPERADMIN") {
+    if (!isActive) {
+      Alert({
+        title: "Account is not verified or Blocked",
+        message: "Please verify your account or contact the SuperAdmin",
+        type: "error",
+        confirmButtonText: "OK",
+        showConfirmButton: true,
+      });
+      dispatch(logout());
+      navigate("login");
+    } else if (user.role === "SUPERADMIN") {
       navigate("/superAdmin/Dashboard");
     } else if (user.role === "ADMIN") {
       navigate("/admin/Dashboard");
     } else {
       navigate("/");
     }
-  }, [user.role]);
+  }, [user.role, isActive]);
   return (
     <div>
       <ParentRoute>

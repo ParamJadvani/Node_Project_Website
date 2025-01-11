@@ -10,17 +10,22 @@ const SALT_ROUNDS = Number(process.env.SALT_ROUNDS);
 
 // Get Users (All Users or Filtered by Role)
 const GetUsers = async (req, res) => {
-  const { role } = req.query;
-  const filter = role ? { role } : {};
+  const { role, _id, name, email } = req.query;
+  const filter = {};
+
+  if (role) filter.role = role.toUpperCase();
+  if (_id) filter._id = _id;
+  if (name) filter.username = { $regex: name, $options: "i" };
+  if (email) filter.email = { $regex: email, $options: "i" };
 
   try {
     let users = await User.find(filter, "-password");
-    users = users.filter((user) => user.role === "USER");
 
     if (users.length === 0) {
       return res.status(404).json({ message: "No users found." });
     }
 
+    // Return the users
     res.status(200).json({ message: "Users retrieved successfully", users });
   } catch (error) {
     res.status(500).json({
@@ -49,6 +54,7 @@ const SignUp = async (req, res) => {
       profile,
       number,
       role,
+      isActive: role === "ADMIN" ? false : true,
     });
 
     const tokenData = {

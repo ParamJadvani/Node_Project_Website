@@ -40,6 +40,26 @@ const userSchema = new mongoose.Schema(
       default: "No profile picture uploaded",
       trim: true,
     },
+    products: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+      ],
+      default: function () {
+        return this.role === "ADMIN" ? [] : null;
+      },
+      validate: {
+        validator: function (value) {
+          if (this.role === "ADMIN") {
+            return true;
+          }
+          return value === null;
+        },
+        message: "Products field is only allowed for admins.",
+      },
+    },
   },
   {
     timestamps: true,

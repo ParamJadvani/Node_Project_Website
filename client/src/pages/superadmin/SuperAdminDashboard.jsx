@@ -6,50 +6,115 @@ import {
   Modal,
   Card,
   CardContent,
+  AppBar,
+  Toolbar,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  IconButton,
+  Chip,
+  CardActions,
+  Avatar,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import PersonIcon from "@mui/icons-material/Person";
+import GroupIcon from "@mui/icons-material/Group";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { GridMenuIcon } from "@mui/x-data-grid";
+import { Grid } from "@mui/system";
+
+const drawerWidth = 240;
 
 // Header Component
-const Header = () => {
+const Header = ({ toggleDrawer }) => {
   return (
-    <Typography
-      variant="h4"
-      gutterBottom
+    <AppBar
+      position="fixed"
       sx={{
-        p: 3,
         backgroundColor: "#172831",
-        color: "#fff",
-        fontWeight: "bold",
       }}
     >
-      SuperAdmin Dashboard
-    </Typography>
+      <Toolbar>
+        <IconButton
+          edge="start"
+          color="inherit"
+          aria-label="menu"
+          onClick={toggleDrawer}
+          sx={{ mr: 2 }}
+        >
+          <GridMenuIcon />
+        </IconButton>
+        <Typography variant="h6" noWrap component="div">
+          SuperAdmin Dashboard
+        </Typography>
+      </Toolbar>
+    </AppBar>
   );
 };
 
-// TabNavigation Component
-const TabNavigation = ({ activeTab, setActiveTab }) => {
+// Drawer Navigation Component
+const DrawerNavigation = ({
+  activeTab,
+  setActiveTab,
+  drawerOpen,
+  toggleDrawer,
+}) => {
+  const menuItems = [
+    { id: 1, label: "Profile", icon: <PersonIcon /> },
+    { id: 2, label: "User Management", icon: <GroupIcon /> },
+    { id: 3, label: "Admin Management", icon: <AdminPanelSettingsIcon /> },
+    { id: 4, label: "Product Management", icon: <ShoppingCartIcon /> },
+    { id: 5, label: "Logout", icon: <LogoutIcon /> },
+  ];
+
+  const handleMenuClick = (id) => {
+    if (id === 5) {
+      alert("Logging out...");
+      return;
+    }
+    setActiveTab(id);
+    toggleDrawer(); // Close drawer on menu click
+  };
+
   return (
-    <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-      <Button
-        variant={activeTab === 1 ? "contained" : "outlined"}
-        onClick={() => setActiveTab(1)}
-      >
-        User Management
-      </Button>
-      <Button
-        variant={activeTab === 2 ? "contained" : "outlined"}
-        onClick={() => setActiveTab(2)}
-      >
-        Product Management
-      </Button>
-      <Button
-        variant={activeTab === 3 ? "contained" : "outlined"}
-        onClick={() => setActiveTab(3)}
-      >
-        Admin Management
-      </Button>
-    </Box>
+    <Drawer
+      variant="temporary"
+      open={drawerOpen}
+      onClose={toggleDrawer}
+      sx={{
+        "& .MuiDrawer-paper": {
+          width: drawerWidth,
+          backgroundColor: "#172831",
+          color: "#fff",
+        },
+      }}
+    >
+      <Toolbar />
+      <Box sx={{ overflow: "auto" }}>
+        <List>
+          {menuItems.map((item) => (
+            <ListItem key={item.id} disablePadding>
+              <ListItemButton
+                onClick={() => handleMenuClick(item.id)}
+                sx={{
+                  backgroundColor: activeTab === item.id ? "teal" : "inherit",
+                  "&:hover": { backgroundColor: "teal" },
+                }}
+              >
+                <ListItemIcon sx={{ color: "#fff" }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+        <Divider sx={{ backgroundColor: "#fff" }} />
+      </Box>
+    </Drawer>
   );
 };
 
@@ -59,38 +124,97 @@ const UserManagement = () => {
     { id: 1, name: "User X", email: "userX@example.com", role: "User" },
     { id: 2, name: "User Y", email: "userY@example.com", role: "User" },
   ]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [open, setOpen] = useState(false);
 
-  const addUser = () => {
-    setUsers((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        name: "New User",
-        email: "newuser@example.com",
-        role: "User",
-      },
-    ]);
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setOpen(true);
   };
 
-  const userColumns = [
-    { field: "id", headerName: "ID", width: 100 },
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "email", headerName: "Email", width: 300 },
-    { field: "role", headerName: "Role", width: 150 },
-  ];
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedUser(null);
+  };
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          User Management
-        </Typography>
-        <DataGrid rows={users} columns={userColumns} pageSize={5} autoHeight />
-        <Button variant="contained" sx={{ mt: 2 }} onClick={addUser}>
-          Add User
-        </Button>
-      </CardContent>
-    </Card>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        User Management
+      </Typography>
+
+      {/* User Cards */}
+      <Grid container spacing={3}>
+        {users.map((user) => (
+          <Grid item xs={12} sm={6} md={4} key={user.id}>
+            <Card sx={{ display: "flex", flexDirection: "column", p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Avatar sx={{ mr: 2 }}>{user.name.charAt(0)}</Avatar>
+                <Typography variant="h6">{user.name}</Typography>
+              </Box>
+              <Typography variant="body2" color="textSecondary">
+                {user.email}
+              </Typography>
+              <Chip
+                label={user.role}
+                color="primary"
+                variant="outlined"
+                sx={{ mt: 1 }}
+              />
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleUserClick(user)}
+                  sx={{ mr: 1 }}
+                >
+                  View Details
+                </Button>
+              </Box>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Modal for User Details */}
+      <Modal open={open} onClose={handleClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            padding: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+            width: 400,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            User Details
+          </Typography>
+          {selectedUser && (
+            <>
+              <Typography variant="body1">Name: {selectedUser.name}</Typography>
+              <Typography variant="body1">
+                Email: {selectedUser.email}
+              </Typography>
+              <Typography variant="body1">Role: {selectedUser.role}</Typography>
+            </>
+          )}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleClose}
+            sx={{ mt: 2 }}
+          >
+            Close
+          </Button>
+        </Box>
+      </Modal>
+    </Box>
   );
 };
 
@@ -116,63 +240,6 @@ const AdminManagement = () => {
   ]);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [open, setOpen] = useState(false);
-
-  const addAdmin = () => {
-    setAdmins((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        name: `New Admin ${prev.length + 1}`,
-        email: `newadmin${prev.length + 1}@example.com`,
-        role: "Admin",
-        blocked: false,
-        products: [],
-      },
-    ]);
-  };
-
-  const adminColumns = [
-    { field: "id", headerName: "ID", width: 100 },
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "email", headerName: "Email", width: 300 },
-    { field: "role", headerName: "Role", width: 150 },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 300,
-      renderCell: (params) => (
-        <div>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => handleAdminClick(params.row)}
-            sx={{ mr: 1 }}
-          >
-            View Details
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => toggleBlockAdmin(params.row.id)}
-            disabled={params.row.blocked}
-          >
-            Block
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => toggleUnblockAdmin(params.row.id)}
-            disabled={!params.row.blocked}
-          >
-            Unblock
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   const handleAdminClick = (admin) => {
     setSelectedAdmin(admin);
@@ -211,22 +278,67 @@ const AdminManagement = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Admin Management
-        </Typography>
-        <DataGrid
-          rows={admins}
-          columns={adminColumns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          autoHeight
-        />
-        <Button variant="contained" sx={{ mt: 2 }} onClick={addAdmin}>
-          Add Admin
-        </Button>
-      </CardContent>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Admin Management
+      </Typography>
+
+      {/* Admin Cards */}
+      <Grid container spacing={3}>
+        {admins.map((admin) => (
+          <Grid item xs={12} sm={6} md={4} key={admin.id}>
+            <Card sx={{ display: "flex", flexDirection: "column", p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Avatar sx={{ mr: 2 }}>{admin.name.charAt(0)}</Avatar>
+                <Typography variant="h6">{admin.name}</Typography>
+              </Box>
+              <Typography variant="body2" color="textSecondary">
+                {admin.email}
+              </Typography>
+              <Chip
+                label={admin.role}
+                color={admin.blocked ? "error" : "success"}
+                variant="outlined"
+                sx={{ mt: 1 }}
+              />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Products Created: {admin.products.length}
+              </Typography>
+
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  onClick={() => handleAdminClick(admin)}
+                  sx={{ mr: 1 }}
+                >
+                  View Details
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => toggleBlockAdmin(admin.id)}
+                  disabled={admin.blocked}
+                >
+                  Block
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  onClick={() => toggleUnblockAdmin(admin.id)}
+                  disabled={!admin.blocked}
+                  sx={{ ml: 1 }}
+                >
+                  Unblock
+                </Button>
+              </Box>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* Modal for Admin Details */}
       <Modal open={open} onClose={handleClose}>
@@ -278,12 +390,12 @@ const AdminManagement = () => {
           </Button>
         </Box>
       </Modal>
-    </Card>
+    </Box>
   );
 };
 
 // ProductManagement Component
-const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
+const ProductManagement = () => {
   const [purchaseHistoryModal, setPurchaseHistoryModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [products, setProducts] = useState([
@@ -310,16 +422,7 @@ const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
     },
   ]);
 
-  const filteredProducts =
-    role === "SuperAdmin"
-      ? products
-      : products.filter((product) => product.createdBy === loggedInAdmin);
-
   const openPurchaseHistoryModal = (product) => {
-    if (role === "Admin" && product.createdBy !== loggedInAdmin) {
-      alert("You cannot view this product's purchase history.");
-      return;
-    }
     setSelectedProduct(product);
     setPurchaseHistoryModal(true);
   };
@@ -336,72 +439,100 @@ const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
     setProducts(updatedProducts);
   };
 
-  const createProduct = () => {
-    onProductCreate();
-  };
-
   return (
     <Box>
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Product Management
-          </Typography>
-          <Button variant="contained" color="primary" onClick={createProduct}>
-            Create New Product
-          </Button>
-          <Box mt={3}>
-            <Typography variant="body1">Products List</Typography>
-            {filteredProducts.map((product) => (
-              <Box
-                key={product.id}
-                mb={2}
-                sx={{ border: "1px solid #ddd", borderRadius: 2, p: 2 }}
-              >
-                <Typography variant="body2">{product.name}</Typography>
-                <Typography variant="body2">
-                  Company: {product.company}
-                </Typography>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          textAlign: "center",
+          mb: 4,
+          color: "#172831",
+          fontWeight: "bold",
+        }}
+      >
+        Product Management
+      </Typography>
+
+      <Grid container spacing={3}>
+        {products.map((product) => (
+          <Grid item xs={12} sm={6} md={4} key={product.id}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: 4,
+                p: 2,
+                transition: "transform 0.3s",
+                "&:hover": {
+                  transform: "scale(1.03)",
+                  boxShadow: 6,
+                },
+              }}
+            >
+              <CardContent>
                 <Typography
-                  variant="body2"
-                  color={product.isApproved ? "green" : "red"}
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "#2c3e50" }}
                 >
-                  Status: {product.isApproved ? "Approved" : "Pending Approval"}
+                  {product.name}
                 </Typography>
+                <Typography variant="body2" sx={{ color: "gray", mb: 2 }}>
+                  {product.company}
+                </Typography>
+                <Chip
+                  label={product.isApproved ? "Approved" : "Pending Approval"}
+                  color={product.isApproved ? "success" : "warning"}
+                  sx={{ mb: 2 }}
+                />
+                <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
+                  Created by: <b>{product.createdBy}</b>
+                </Typography>
+              </CardContent>
+
+              <CardActions
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mt: 1,
+                }}
+              >
                 <Button
                   variant="contained"
                   size="small"
-                  sx={{ mt: 1 }}
+                  color="primary"
                   onClick={() => openPurchaseHistoryModal(product)}
+                  sx={{
+                    textTransform: "capitalize",
+                    fontSize: "0.875rem",
+                  }}
                 >
                   View Purchase History
                 </Button>
-                {role === "SuperAdmin" && (
-                  <Box sx={{ mt: 2 }}>
-                    <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      onClick={() => toggleApprovalStatus(product.id, true)}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      size="small"
-                      sx={{ ml: 2 }}
-                      onClick={() => toggleApprovalStatus(product.id, false)}
-                    >
-                      Reject
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            ))}
-          </Box>
-        </CardContent>
-      </Card>
+                <Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="success"
+                    sx={{ textTransform: "capitalize" }}
+                    onClick={() => toggleApprovalStatus(product.id, true)}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    sx={{ ml: 1, textTransform: "capitalize" }}
+                    onClick={() => toggleApprovalStatus(product.id, false)}
+                  >
+                    Reject
+                  </Button>
+                </Box>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* Purchase History Modal */}
       <Modal open={purchaseHistoryModal} onClose={closePurchaseHistoryModal}>
@@ -412,27 +543,39 @@ const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
             left: "50%",
             transform: "translate(-50%, -50%)",
             backgroundColor: "white",
-            padding: 4,
             borderRadius: 2,
             boxShadow: 24,
-            width: 400,
+            p: 4,
+            width: { xs: "90%", sm: "400px" },
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            Purchase History for {selectedProduct?.name}
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ textAlign: "center", color: "#172831", fontWeight: "bold" }}
+          >
+            Purchase History
           </Typography>
           {selectedProduct && selectedProduct.purchaseHistory.length > 0 ? (
             <Box>
-              <ul>
-                {selectedProduct.purchaseHistory.map((purchase) => (
-                  <li key={purchase.id}>
-                    {purchase.buyer} - {purchase.date} - {purchase.amount}
-                  </li>
-                ))}
-              </ul>
+              {selectedProduct.purchaseHistory.map((purchase) => (
+                <Box
+                  key={purchase.id}
+                  sx={{
+                    borderBottom: "1px solid #eee",
+                    py: 1,
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography variant="body2">{purchase.buyer}</Typography>
+                  <Typography variant="body2">{purchase.date}</Typography>
+                  <Typography variant="body2">{purchase.amount}</Typography>
+                </Box>
+              ))}
             </Box>
           ) : (
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ textAlign: "center", mt: 2 }}>
               No purchase history available.
             </Typography>
           )}
@@ -440,7 +583,12 @@ const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
             variant="contained"
             color="primary"
             onClick={closePurchaseHistoryModal}
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 3,
+              display: "block",
+              mx: "auto",
+              textTransform: "capitalize",
+            }}
           >
             Close
           </Button>
@@ -452,28 +600,46 @@ const ProductManagement = ({ role, loggedInAdmin, onProductCreate }) => {
 
 // SuperAdminDashboard Component
 const SuperAdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState(2);
+  const [drawerOpen, setDrawerOpen] = useState(false); // Control drawer open/close state
   const [loggedInAdmin, setLoggedInAdmin] = useState("Admin A");
   const [role] = useState("SuperAdmin");
 
-  const handleProductCreate = () => {
-    alert("Navigate to product creation page.");
+  const toggleDrawer = () => {
+    setDrawerOpen((prevState) => !prevState);
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Header />
-      <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+    <Box sx={{ display: "flex" }}>
+      <Header toggleDrawer={toggleDrawer} />
+      <DrawerNavigation
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        drawerOpen={drawerOpen}
+        toggleDrawer={toggleDrawer}
+      />
 
-      {activeTab === 1 && <UserManagement />}
-      {activeTab === 2 && (
-        <ProductManagement
-          role={role}
-          loggedInAdmin={loggedInAdmin}
-          onProductCreate={handleProductCreate}
-        />
-      )}
-      {activeTab === 3 && <AdminManagement />}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          bgcolor: "#f7f7f7",
+          p: 3,
+          mt: "64px",
+          minHeight: "100vh",
+        }}
+      >
+        {activeTab === 1 && (
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Profile Section (Coming Soon)
+          </Typography>
+        )}
+        {activeTab === 2 && <UserManagement />}
+        {activeTab === 3 && <AdminManagement />}
+        {activeTab === 4 && (
+          <ProductManagement role={role} loggedInAdmin={loggedInAdmin} />
+        )}
+      </Box>
     </Box>
   );
 };
