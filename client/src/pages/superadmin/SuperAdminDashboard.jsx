@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -19,6 +19,7 @@ import {
   Chip,
   CardActions,
   Avatar,
+  Tooltip,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import GroupIcon from "@mui/icons-material/Group";
@@ -27,6 +28,19 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { GridMenuIcon } from "@mui/x-data-grid";
 import { Grid } from "@mui/system";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  blockAdmin,
+  getAdmins,
+  verifyAdmin,
+} from "../../redux/slice/admin/AdminApi";
+import { logout } from "../../redux/slice/auth/AuthApi";
+import {
+  approveProduct,
+  deleteProduct,
+  getAllProducts,
+} from "../../redux/slice/product/ProductApi";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
@@ -64,6 +78,7 @@ const DrawerNavigation = ({
   drawerOpen,
   toggleDrawer,
 }) => {
+  const dispatch = useDispatch();
   const menuItems = [
     { id: 1, label: "Profile", icon: <PersonIcon /> },
     { id: 2, label: "User Management", icon: <GroupIcon /> },
@@ -74,7 +89,7 @@ const DrawerNavigation = ({
 
   const handleMenuClick = (id) => {
     if (id === 5) {
-      alert("Logging out...");
+      dispatch(logout());
       return;
     }
     setActiveTab(id);
@@ -220,56 +235,27 @@ const UserManagement = () => {
 
 // AdminManagement Component
 const AdminManagement = () => {
-  const [admins, setAdmins] = useState([
-    {
-      id: 1,
-      name: "Admin A",
-      email: "adminA@example.com",
-      role: "Admin",
-      blocked: false,
-      products: ["Product 1", "Product 2"],
-    },
-    {
-      id: 2,
-      name: "Admin B",
-      email: "adminB@example.com",
-      role: "Admin",
-      blocked: false,
-      products: ["Product 3"],
-    },
-  ]);
+  const dispatch = useDispatch();
+  const { admins, loading } = useSelector((state) => state.adminReducer);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [open, setOpen] = useState(false);
+
+  // Fetch admins when the component mounts
+  useEffect(() => {
+    dispatch(getAdmins());
+  }, [dispatch]);
 
   const handleAdminClick = (admin) => {
     setSelectedAdmin(admin);
     setOpen(true);
   };
 
-  const toggleBlockAdmin = (id) => {
-    setAdmins((prev) =>
-      prev.map((admin) =>
-        admin.id === id
-          ? {
-              ...admin,
-              blocked: true,
-            }
-          : admin
-      )
-    );
-  };
-
-  const toggleUnblockAdmin = (id) => {
-    setAdmins((prev) =>
-      prev.map((admin) =>
-        admin.id === id
-          ? {
-              ...admin,
-              blocked: false,
-            }
-          : admin
-      )
-    );
+  const handleBlockToggle = (id, isActive) => {
+    if (isActive) {
+      dispatch(blockAdmin(id));
+    } else {
+      dispatch(verifyAdmin(id));
+    }
   };
 
   const handleClose = () => {
@@ -283,62 +269,65 @@ const AdminManagement = () => {
         Admin Management
       </Typography>
 
-      {/* Admin Cards */}
-      <Grid container spacing={3}>
-        {admins.map((admin) => (
-          <Grid item xs={12} sm={6} md={4} key={admin.id}>
-            <Card sx={{ display: "flex", flexDirection: "column", p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Avatar sx={{ mr: 2 }}>{admin.name.charAt(0)}</Avatar>
-                <Typography variant="h6">{admin.name}</Typography>
-              </Box>
-              <Typography variant="body2" color="textSecondary">
-                {admin.email}
-              </Typography>
-              <Chip
-                label={admin.role}
-                color={admin.blocked ? "error" : "success"}
-                variant="outlined"
-                sx={{ mt: 1 }}
-              />
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Products Created: {admin.products.length}
-              </Typography>
+      {/* Show loading state */}
+      {loading ? (
+        <Typography>Loading admins...</Typography>
+      ) : admins.length === 0 ? (
+        <Typography>No admins found.</Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {admins.map((admin) => (
+            <Grid item xs={12} sm={6} md={4} key={admin.id}>
+              <Card sx={{ display: "flex", flexDirection: "column", p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Avatar sx={{ mr: 2 }}>{admin.username.charAt(0)}</Avatar>
+                  <Typography variant="h6">{admin.username}</Typography>
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  {admin.email}
+                </Typography>
+                <Chip
+                  label={admin.role}
+                  color={admin.isActive ? "success" : "error"}
+                  variant="outlined"
+                  sx={{ mt: 1 }}
+                />
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Products Created: {admin.products.length}
+                </Typography>
 
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  size="small"
-                  onClick={() => handleAdminClick(admin)}
-                  sx={{ mr: 1 }}
+                {/* Admin Account Status */}
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, color: admin.isActive ? "green" : "red" }}
                 >
-                  View Details
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  onClick={() => toggleBlockAdmin(admin.id)}
-                  disabled={admin.blocked}
-                >
-                  Block
-                </Button>
-                <Button
-                  variant="contained"
-                  color="success"
-                  size="small"
-                  onClick={() => toggleUnblockAdmin(admin.id)}
-                  disabled={!admin.blocked}
-                  sx={{ ml: 1 }}
-                >
-                  Unblock
-                </Button>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  Status: {admin.isActive ? "Unblocked" : "Blocked"}
+                </Typography>
+
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => handleAdminClick(admin)}
+                    sx={{ mr: 1 }}
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color={admin.isActive ? "error" : "success"}
+                    size="small"
+                    onClick={() => handleBlockToggle(admin._id, admin.isActive)}
+                  >
+                    {admin.isActive ? "Block" : "Unblock"}
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       {/* Modal for Admin Details */}
       <Modal open={open} onClose={handleClose}>
@@ -370,7 +359,7 @@ const AdminManagement = () => {
                 Role: {selectedAdmin.role}
               </Typography>
               <Typography variant="body1">
-                Blocked: {selectedAdmin.blocked ? "Yes" : "No"}
+                isActive: {selectedAdmin.isActive ? "Yes" : "No"}
               </Typography>
               <Typography variant="body1">Products Created:</Typography>
               <ul>
@@ -396,47 +385,25 @@ const AdminManagement = () => {
 
 // ProductManagement Component
 const ProductManagement = () => {
-  const [purchaseHistoryModal, setPurchaseHistoryModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Product 1",
-      company: "Company A",
-      isApproved: false,
-      createdBy: "Admin A",
-      purchaseHistory: [
-        { id: 1, buyer: "User X", date: "2024-12-30", amount: "$100" },
-        { id: 2, buyer: "User Y", date: "2024-12-31", amount: "$200" },
-      ],
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      company: "Company B",
-      isApproved: true,
-      createdBy: "Admin B",
-      purchaseHistory: [
-        { id: 3, buyer: "User Z", date: "2024-12-25", amount: "$300" },
-      ],
-    },
-  ]);
+  const dispatch = useDispatch();
+  const { products } = useSelector((state) => state.productReducer);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
 
-  const openPurchaseHistoryModal = (product) => {
-    setSelectedProduct(product);
-    setPurchaseHistoryModal(true);
-  };
-
-  const closePurchaseHistoryModal = () => {
-    setPurchaseHistoryModal(false);
-    setSelectedProduct(null);
-  };
+  useEffect(() => {
+    dispatch(getAllProducts());
+  }, [dispatch]);
 
   const toggleApprovalStatus = (productId, status) => {
-    const updatedProducts = products.map((product) =>
-      product.id === productId ? { ...product, isApproved: status } : product
-    );
-    setProducts(updatedProducts);
+    if (status) {
+      dispatch(approveProduct(productId));
+    } else {
+      dispatch(deleteProduct(`${productId}?sendMail=true`));
+    }
+  };
+
+  const handleNavigate = (productId) => {
+    navigate(`/product/${productId}`);
   };
 
   return (
@@ -456,7 +423,7 @@ const ProductManagement = () => {
 
       <Grid container spacing={3}>
         {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product.id}>
+          <Grid item xs={12} sm={6} md={4} key={product._id}>
             <Card
               sx={{
                 borderRadius: 3,
@@ -470,25 +437,40 @@ const ProductManagement = () => {
               }}
             >
               <CardContent>
+                {/* Product Image */}
+                <Box
+                  component="img"
+                  src={`${API_URL}/${product.image}`}
+                  alt={product.name}
+                  sx={{
+                    width: "100%",
+                    height: 200,
+                    objectFit: "cover",
+                    borderRadius: 2,
+                    mb: 2,
+                  }}
+                />
+                {/* Product Details */}
                 <Typography
                   variant="h6"
                   sx={{ fontWeight: "bold", color: "#2c3e50" }}
                 >
                   {product.name}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "gray", mb: 2 }}>
-                  {product.company}
+                <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
+                  Created by: <b>{product.user?.username || "Unknown"}</b>
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
+                  Admin Email: <b>{product.user?.email || "Unknown"}</b>
                 </Typography>
                 <Chip
-                  label={product.isApproved ? "Approved" : "Pending Approval"}
-                  color={product.isApproved ? "success" : "warning"}
+                  label={product.isVerified ? "Approved" : "Pending Approval"}
+                  color={product.isVerified ? "success" : "warning"}
                   sx={{ mb: 2 }}
                 />
-                <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
-                  Created by: <b>{product.createdBy}</b>
-                </Typography>
               </CardContent>
 
+              {/* Actions */}
               <CardActions
                 sx={{
                   display: "flex",
@@ -496,34 +478,53 @@ const ProductManagement = () => {
                   mt: 1,
                 }}
               >
+                {/* View More Details */}
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   size="small"
-                  color="primary"
-                  onClick={() => openPurchaseHistoryModal(product)}
-                  sx={{
-                    textTransform: "capitalize",
-                    fontSize: "0.875rem",
-                  }}
+                  onClick={() => handleNavigate(product._id)}
+                  color="info"
+                  sx={{ textTransform: "capitalize" }}
                 >
-                  View Purchase History
+                  View More Details
                 </Button>
+
                 <Box>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="success"
-                    sx={{ textTransform: "capitalize" }}
-                    onClick={() => toggleApprovalStatus(product.id, true)}
-                  >
-                    Approve
-                  </Button>
+                  {/* Approve Button */}
+                  {!product.isVerified ? (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="success"
+                      sx={{ textTransform: "capitalize" }}
+                      onClick={() => toggleApprovalStatus(product._id, true)}
+                    >
+                      Approve
+                    </Button>
+                  ) : (
+                    <Tooltip title="Product is already approved" arrow>
+                      <span>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          color="success"
+                          sx={{ textTransform: "capitalize" }}
+                          disabled
+                        >
+                          Approve
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  )}
+
+                  {/* Reject Button */}
                   <Button
                     variant="outlined"
                     size="small"
                     color="error"
                     sx={{ ml: 1, textTransform: "capitalize" }}
-                    onClick={() => toggleApprovalStatus(product.id, false)}
+                    onClick={() => toggleApprovalStatus(product._id, false)}
+                    disabled={product.isVerified}
                   >
                     Reject
                   </Button>
@@ -533,67 +534,6 @@ const ProductManagement = () => {
           </Grid>
         ))}
       </Grid>
-
-      {/* Purchase History Modal */}
-      <Modal open={purchaseHistoryModal} onClose={closePurchaseHistoryModal}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 4,
-            width: { xs: "90%", sm: "400px" },
-          }}
-        >
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ textAlign: "center", color: "#172831", fontWeight: "bold" }}
-          >
-            Purchase History
-          </Typography>
-          {selectedProduct && selectedProduct.purchaseHistory.length > 0 ? (
-            <Box>
-              {selectedProduct.purchaseHistory.map((purchase) => (
-                <Box
-                  key={purchase.id}
-                  sx={{
-                    borderBottom: "1px solid #eee",
-                    py: 1,
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body2">{purchase.buyer}</Typography>
-                  <Typography variant="body2">{purchase.date}</Typography>
-                  <Typography variant="body2">{purchase.amount}</Typography>
-                </Box>
-              ))}
-            </Box>
-          ) : (
-            <Typography variant="body2" sx={{ textAlign: "center", mt: 2 }}>
-              No purchase history available.
-            </Typography>
-          )}
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={closePurchaseHistoryModal}
-            sx={{
-              mt: 3,
-              display: "block",
-              mx: "auto",
-              textTransform: "capitalize",
-            }}
-          >
-            Close
-          </Button>
-        </Box>
-      </Modal>
     </Box>
   );
 };

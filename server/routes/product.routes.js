@@ -5,10 +5,11 @@ const {
   updateProduct,
   deleteProduct,
   getProductByAdminId,
+  approveProduct,
 } = require("../controllers/product.controller");
 const { isExistFields } = require("../middlewares/isValidateField");
 const { verifyToken } = require("../middlewares/JWT_AUTH");
-const { isSuperAdmin, isAdmin } = require("../middlewares/role");
+const { isSuperAdmin, isAdmin, isNotUser } = require("../middlewares/role");
 const upload = require("../utils/multer");
 
 const productRouter = require("express").Router();
@@ -17,7 +18,7 @@ productRouter.get("/", getProducts);
 
 productRouter.get("/adminId", verifyToken, isAdmin, getProductByAdminId);
 
-productRouter.get("/:id", verifyToken, isSuperAdmin, getProductById);
+productRouter.get("/:id", verifyToken, getProductById);
 
 productRouter.post(
   "/",
@@ -30,6 +31,8 @@ productRouter.post(
 
 productRouter.patch("/:id", verifyToken, isAdmin, updateProduct);
 
-productRouter.delete("/:id", verifyToken, isAdmin, deleteProduct);
+productRouter.patch("/:id/approve", verifyToken, isSuperAdmin, approveProduct);
+
+productRouter.delete("/:id", verifyToken, isNotUser, deleteProduct);
 
 module.exports = productRouter;

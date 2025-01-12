@@ -165,6 +165,7 @@ const VerifyAccount = async (req, res) => {
     const emailSubject =
       user.role === "ADMIN" ? "Admin Approval" : "Account Verified";
     const emailBody = `<h1>${user.role} account verified successfully!</h1>`;
+
     sendMailVerification(user.email, emailSubject, emailBody).catch((error) => {
       res.status(500).json({
         message: "Something went wrong. Please try again later.",
@@ -225,6 +226,7 @@ const verifyAdminAccount = async (req, res) => {
 
     const subject = "Account Approved";
     const html = "<h1>Your account has been approved!</h1>";
+
     sendMailVerification(updatedAdmin.email, subject, html).catch((error) => {
       res.status(500).json({
         message: "Something went wrong. Please try again later.",
@@ -259,7 +261,13 @@ const blockAdminAccount = async (req, res) => {
 
     const subject = "Account Blocked";
     const html = "<h1>Your account has been blocked.</h1>";
-    await sendMailVerification(updatedAdmin.email, subject, html);
+
+    sendMailVerification(updatedAdmin.email, subject, html).catch((error) => {
+      res.status(500).json({
+        message: "Something went wrong. Please try again later.",
+        error: error.message,
+      });
+    });
 
     res
       .status(200)

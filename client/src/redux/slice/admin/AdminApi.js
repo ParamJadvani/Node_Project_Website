@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import API from "../../../config/Api";
+import { getToken } from "../../../utils/Cookies";
 
 const intialState = {
   admins: [],
@@ -13,9 +14,9 @@ const getAdmins = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await API.get("/user?role=admin");
-      return response.data;
+      return response.data.users;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -25,9 +26,9 @@ const getAdminById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await API.get(`/user?_id=${id}`);
-      return response.data;
+      return response.data.users[0];
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -37,9 +38,9 @@ const verifyAdmin = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await API.patch(`/user/${id}/verifyadmin`);
-      return response.data; // Assuming response contains updated admin data
+      return response.data.admin;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -48,10 +49,11 @@ const blockAdmin = createAsyncThunk(
   "admin/blockAdmin",
   async (id, { rejectWithValue }) => {
     try {
+      console.log(id);
       const response = await API.patch(`/user/${id}/blockadmin`);
-      return response.data; // Assuming response contains updated admin data
+      return response.data.admin;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -89,7 +91,6 @@ const AdminSlice = createSlice({
       })
       .addCase(verifyAdmin.fulfilled, (state, { payload }) => {
         state.admin = payload;
-        // Update the admins array with the verified admin
         state.admins = state.admins.map((admin) =>
           admin._id === payload._id ? { ...admin, ...payload } : admin
         );
@@ -104,7 +105,6 @@ const AdminSlice = createSlice({
       })
       .addCase(blockAdmin.fulfilled, (state, { payload }) => {
         state.admin = payload;
-        // Update the admins array with the blocked admin
         state.admins = state.admins.map((admin) =>
           admin._id === payload._id ? { ...admin, ...payload } : admin
         );

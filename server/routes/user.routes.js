@@ -33,7 +33,7 @@ UserRouter.patch(
 );
 
 UserRouter.patch(
-  "/:adminID/verifyadmin",
+  "/:adminId/blockadmin",
   verifyToken,
   isSuperAdmin,
   blockAdminAccount

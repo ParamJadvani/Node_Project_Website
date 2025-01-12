@@ -12,7 +12,7 @@ const getAllProducts = createAsyncThunk(
   "product/get",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get("/products");
+      const res = await API.get("/product");
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data.message);
@@ -86,6 +86,18 @@ const deleteProduct = createAsyncThunk(
   }
 );
 
+const approveProduct = createAsyncThunk(
+  "product/approve",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const res = await API.patch(`/product/${productId}/approve`);
+      return res.data.product;
+    } catch (error) {
+      return rejectWithValue(error.response?.data.message);
+    }
+  }
+);
+
 const productSlice = createSlice({
   initialState: intialState,
   name: "products",
@@ -151,6 +163,17 @@ const productSlice = createSlice({
       })
       .addCase(deleteProduct.rejected, (state, { payload }) => {
         state.error = payload;
+      })
+      .addCase(approveProduct.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(approveProduct.fulfilled, (state, { payload }) => {
+        state.products = state.products.map((product) =>
+          product.id === payload.id ? payload : product
+        );
+      })
+      .addCase(approveProduct.rejected, (state, { payload }) => {
+        state.error = payload;
       });
   },
 });
@@ -165,4 +188,5 @@ export {
   createProduct,
   updateProduct,
   deleteProduct,
+  approveProduct,
 };

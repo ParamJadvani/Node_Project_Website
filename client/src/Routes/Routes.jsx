@@ -10,6 +10,7 @@ import PrivateRoute from "./PrivateRoute";
 import { useDispatch, useSelector } from "react-redux";
 import Alert from "../components/Alert";
 import { logout } from "../redux/slice/auth/AuthApi";
+import ProductDetailPage from "../Components/ProductDetailPage";
 
 const Routes = () => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const Routes = () => {
             </PrivateRoute>
           }
         />
+        <Route path="/product/:id" element={<ProductDetailPage />} />
       </ParentRoute>
     </div>
   );

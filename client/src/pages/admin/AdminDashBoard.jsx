@@ -309,6 +309,16 @@ const AdminDashboard = () => {
               <Typography variant="body2" sx={{ color: "#8e99f3", mb: 1 }}>
                 Category: {product.category}
               </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: product.isVerified ? "#388e3c" : "#d32f2f",
+                  fontWeight: "bold",
+                  mb: 1,
+                }}
+              >
+                {product.isVerified ? "Verified" : "Not Verified"}
+              </Typography>
             </CardContent>
 
             {/* Action Buttons */}
