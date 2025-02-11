@@ -19,8 +19,13 @@ import {
   CardContent,
   CardActions,
   InputAdornment,
-  Avatar,
   Divider,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -32,6 +37,8 @@ import {
   Inventory as InventoryIcon,
   Person as PersonIcon,
   ExitToApp as ExitToAppIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -42,11 +49,14 @@ import {
 } from "../../redux/slice/product/ProductApi";
 import { logout } from "../../redux/slice/auth/AuthApi";
 
+const drawerWidth = 240;
+
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.productReducer);
   const API_URL = import.meta.env.VITE_API_URL;
 
+  // State management
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("Create Product");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -60,20 +70,37 @@ const AdminDashboard = () => {
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
+  // Snackbar state for notifications
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  // Delete confirmation dialog state
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+
+  // Fetch products on mount or refresh
+  const refreshProducts = () => {
     dispatch(getProductByAdminId())
       .unwrap()
       .then((products) => setAllProducts(products))
       .catch((error) => console.error("Error fetching products:", error));
+  };
+
+  useEffect(() => {
+    refreshProducts();
   }, [dispatch]);
+
+  // HANDLERS
 
   const handleCreateProduct = async () => {
     try {
       const formData = new FormData();
-      Object.entries(productData).forEach(([key, value]) =>
-        formData.append(key, value)
-      );
+      Object.entries(productData).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
 
       const result = await dispatch(createProduct(formData)).unwrap();
       setAllProducts((prev) => [...prev, result]);
@@ -85,8 +112,14 @@ const AdminDashboard = () => {
         image: null,
         InStockQty: "",
       });
+      setSnackbarMessage("Product created successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error creating product:", error);
+      setSnackbarMessage("Error creating product");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -99,15 +132,39 @@ const AdminDashboard = () => {
 
       const updatedProduct = await dispatch(updateProduct(product)).unwrap();
       setAllProducts((prev) =>
-        prev.map((product) =>
-          product._id === updatedProduct._id ? updatedProduct : product
-        )
+        prev.map((p) => (p._id === updatedProduct._id ? updatedProduct : p))
       );
       setIsEditModalOpen(false);
+      setSnackbarMessage("Product updated successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
       console.error("Error updating product:", error);
+      setSnackbarMessage("Error updating product");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
+
+  const handleDeleteProduct = async () => {
+    try {
+      await dispatch(deleteProduct(productToDelete._id)).unwrap();
+      setAllProducts((prev) =>
+        prev.filter((p) => p._id !== productToDelete._id)
+      );
+      setOpenDeleteDialog(false);
+      setSnackbarMessage("Product deleted successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setSnackbarMessage("Error deleting product");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  // RENDER FUNCTIONS
 
   const renderCreateProductForm = (isEditMode = false) => (
     <Box
@@ -124,7 +181,6 @@ const AdminDashboard = () => {
         {isEditMode ? "Edit Product" : "Create New Product"}
       </Typography>
       <Grid container spacing={2}>
-        {/* Existing form fields */}
         <Grid item xs={12}>
           <TextField
             fullWidth
@@ -193,7 +249,10 @@ const AdminDashboard = () => {
             rows={3}
             value={productData.description}
             onChange={(e) =>
-              setProductData({ ...productData, description: e.target.value })
+              setProductData({
+                ...productData,
+                description: e.target.value,
+              })
             }
             InputProps={{
               startAdornment: (
@@ -213,7 +272,10 @@ const AdminDashboard = () => {
             type="number"
             value={productData.InStockQty}
             onChange={(e) =>
-              setProductData({ ...productData, InStockQty: e.target.value })
+              setProductData({
+                ...productData,
+                InStockQty: e.target.value,
+              })
             }
             InputProps={{
               startAdornment: (
@@ -224,30 +286,46 @@ const AdminDashboard = () => {
             }}
           />
         </Grid>
-        {!isEditMode && (
+        <Grid item xs={12}>
+          <Button
+            fullWidth
+            variant="outlined"
+            component="label"
+            startIcon={<ImageIcon sx={{ color: "#172831" }} />}
+            sx={{
+              backgroundColor: "#eaf2f8",
+              "&:hover": {
+                backgroundColor: "#d1e4f0",
+              },
+            }}
+          >
+            {isEditMode ? "Change Image" : "Upload Image"}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) =>
+                setProductData({
+                  ...productData,
+                  image: e.target.files[0],
+                })
+              }
+            />
+          </Button>
+        </Grid>
+        {productData.image && productData.image instanceof File && (
           <Grid item xs={12}>
-            <Button
-              fullWidth
-              variant="outlined"
-              component="label"
-              startIcon={<ImageIcon sx={{ color: "#172831" }} />}
+            <Box
+              component="img"
+              src={URL.createObjectURL(productData.image)}
+              alt="Preview"
               sx={{
-                backgroundColor: "#eaf2f8",
-                "&:hover": {
-                  backgroundColor: "#d1e4f0",
-                },
+                width: "100%",
+                maxHeight: 200,
+                objectFit: "contain",
+                mt: 1,
               }}
-            >
-              Upload Image
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(e) =>
-                  setProductData({ ...productData, image: e.target.files[0] })
-                }
-              />
-            </Button>
+            />
           </Grid>
         )}
         <Grid item xs={12}>
@@ -265,108 +343,169 @@ const AdminDashboard = () => {
     </Box>
   );
 
-  const renderViewProducts = () => (
-    <Grid container spacing={3}>
-      {allProducts.map((product) => (
-        <Grid item xs={12} sm={6} md={4} lg={3} key={product._id}>
-          <Card
+  const renderViewProducts = () => {
+    const filteredProducts = allProducts.filter((product) =>
+      product.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return (
+      <Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 2,
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            label="Search Products"
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Type to search..."
+            fullWidth
             sx={{
-              boxShadow: 3,
-              borderRadius: 2,
-              bgcolor: "#fff",
-              height: "100%",
+              maxWidth: "400px",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "25px",
+                backgroundColor: "white",
+                transition: "0.3s",
+                boxShadow: "0px 3px 8px rgba(0, 0, 0, 0.1)",
+                "&:hover": {
+                  boxShadow: "0px 5px 12px rgba(0, 0, 0, 0.15)",
+                },
+                "&.Mui-focused": {
+                  boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+                },
+                "& fieldset": { border: "1px solid #ccc" },
+                "&:hover fieldset": { borderColor: "#172831" },
+                "&.Mui-focused fieldset": { borderColor: "#172831" },
+              },
             }}
-          >
-            {/* Image Section */}
-            {product.image && (
-              <img
-                src={API_URL + "/" + product.image}
-                alt={product.title}
-                style={{
-                  width: "100%",
-                  height: "200px",
-                  objectFit: "cover",
-                  borderTopLeftRadius: "8px",
-                  borderTopRightRadius: "8px",
-                }}
-              />
-            )}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconButton>
+                    <SearchIcon sx={{ color: "#172831" }} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
-            {/* Content Section */}
-            <CardContent sx={{ padding: "16px" }}>
-              <Typography
-                variant="h6"
-                sx={{ color: "#172831", fontWeight: 600, mb: 1 }}
-              >
-                {product.title}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#5c6bc0", mb: 1 }}>
-                Price:{" "}
-                <span style={{ color: "#388e3c", fontWeight: "bold" }}>
-                  ${product.price}
-                </span>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#8e99f3", mb: 1 }}>
-                Category: {product.category}
-              </Typography>
-              <Typography
-                variant="body2"
+          <IconButton onClick={refreshProducts} sx={{ cursor: "pointer" }}>
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        <Grid container spacing={3}>
+          {filteredProducts.map((product) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={product._id}>
+              <Card
                 sx={{
-                  color: product.isVerified ? "#388e3c" : "#d32f2f",
-                  fontWeight: "bold",
-                  mb: 1,
+                  boxShadow: 3,
+                  borderRadius: 2,
+                  bgcolor: "#fff",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                 }}
               >
-                {product.isVerified ? "Verified" : "Not Verified"}
-              </Typography>
-            </CardContent>
-
-            {/* Action Buttons */}
-            <CardActions
-              sx={{ justifyContent: "space-between", padding: "16px" }}
-            >
-              <Button
-                startIcon={<EditIcon />}
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setProductData({
-                    title: product.title,
-                    price: product.price,
-                    category: product.category,
-                    description: product.description,
-                    InStockQty: product.InStockQty,
-                  });
-                  setIsEditModalOpen(true);
-                }}
-                sx={{
-                  color: "#1e88e5",
-                  fontWeight: "bold",
-                  "&:hover": {
-                    backgroundColor: "#e3f2fd",
-                  },
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                startIcon={<DeleteIcon />}
-                color="error"
-                sx={{
-                  fontWeight: "bold",
-                  "&:hover": {
-                    backgroundColor: "#ffebee",
-                  },
-                }}
-                onClick={() => dispatch(deleteProduct(product._id))}
-              >
-                Delete
-              </Button>
-            </CardActions>
-          </Card>
+                {product.image && (
+                  <Box
+                    component="img"
+                    src={`${API_URL}/${product.image}`}
+                    alt={product.title}
+                    sx={{
+                      width: "100%",
+                      height: 200,
+                      objectFit: "cover",
+                      borderTopLeftRadius: "8px",
+                      borderTopRightRadius: "8px",
+                    }}
+                  />
+                )}
+                <CardContent sx={{ padding: "16px" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "#172831", fontWeight: 600, mb: 1 }}
+                  >
+                    {product.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#5c6bc0", mb: 1 }}>
+                    Price:{" "}
+                    <span style={{ color: "#388e3c", fontWeight: "bold" }}>
+                      ${product.price}
+                    </span>
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#8e99f3", mb: 1 }}>
+                    Category: {product.category}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: product.isVerified ? "#388e3c" : "#d32f2f",
+                      fontWeight: "bold",
+                      mb: 1,
+                    }}
+                  >
+                    {product.isVerified ? "Verified" : "Not Verified"}
+                  </Typography>
+                </CardContent>
+                <CardActions
+                  sx={{
+                    justifyContent: "space-between",
+                    padding: "16px",
+                  }}
+                >
+                  <Button
+                    startIcon={<EditIcon />}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setProductData({
+                        title: product.title,
+                        price: product.price,
+                        category: product.category,
+                        description: product.description,
+                        InStockQty: product.InStockQty,
+                        image: product.image, // retain current image if needed
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    sx={{
+                      color: "#1e88e5",
+                      fontWeight: "bold",
+                      "&:hover": { backgroundColor: "#e3f2fd" },
+                      cursor: "pointer",
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    startIcon={<DeleteIcon />}
+                    color="error"
+                    sx={{
+                      fontWeight: "bold",
+                      "&:hover": { backgroundColor: "#ffebee" },
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setProductToDelete(product);
+                      setOpenDeleteDialog(true);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
-      ))}
-    </Grid>
-  );
+      </Box>
+    );
+  };
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -376,44 +515,77 @@ const AdminDashboard = () => {
     <Drawer
       open={isDrawerOpen}
       onClose={toggleDrawer}
+      variant="temporary"
       sx={{
         "& .MuiDrawer-paper": {
-          width: 240,
+          width: drawerWidth,
           backgroundColor: "#172831",
           color: "white",
         },
       }}
     >
-      <Box sx={{ width: 250 }} role="presentation">
+      <Box sx={{ width: drawerWidth }} role="presentation">
         <List>
-          <ListItem button onClick={() => setCurrentPage("Create Product")}>
+          <ListItem
+            button
+            onClick={() => {
+              setCurrentPage("Create Product");
+              toggleDrawer();
+            }}
+            sx={{
+              backgroundColor:
+                currentPage === "Create Product" ? "#1e88e5" : "inherit",
+              cursor: "pointer",
+            }}
+          >
             <ListItemIcon>
               <AddCircleIcon sx={{ color: "white" }} />
             </ListItemIcon>
-            <ListItemText primary="Create Product" sx={{ color: "white" }} />
+            <ListItemText primary="Create Product" />
           </ListItem>
-          <ListItem button onClick={() => setCurrentPage("View Products")}>
+          <ListItem
+            button
+            onClick={() => {
+              setCurrentPage("View Products");
+              toggleDrawer();
+            }}
+            sx={{
+              backgroundColor:
+                currentPage === "View Products" ? "#1e88e5" : "inherit",
+              cursor: "pointer",
+            }}
+          >
             <ListItemIcon>
               <ListAltIcon sx={{ color: "white" }} />
             </ListItemIcon>
-            <ListItemText primary="View Products" sx={{ color: "white" }} />
+            <ListItemText primary="View Products" />
           </ListItem>
-          <Divider sx={{ borderColor: "white" }} />
-          <ListItem button onClick={() => {}}>
+          <Divider sx={{ borderColor: "white", my: 1 }} />
+          <ListItem
+            button
+            onClick={() => {
+              // Placeholder for Profile page; add your profile navigation logic here.
+              toggleDrawer();
+            }}
+            sx={{ cursor: "pointer" }}
+          >
             <ListItemIcon>
               <PersonIcon sx={{ color: "white" }} />
             </ListItemIcon>
-            <ListItemText primary="Profile" sx={{ color: "white" }} />
+            <ListItemText primary="Profile" />
           </ListItem>
-          <ListItem button onClick={() => {}}>
+          <ListItem
+            button
+            onClick={() => {
+              dispatch(logout());
+              toggleDrawer();
+            }}
+            sx={{ cursor: "pointer" }}
+          >
             <ListItemIcon>
               <ExitToAppIcon sx={{ color: "white" }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Logout"
-              sx={{ color: "white" }}
-              onClick={() => dispatch(logout())}
-            />
+            <ListItemText primary="Logout" />
           </ListItem>
         </List>
       </Box>
@@ -423,9 +595,20 @@ const AdminDashboard = () => {
   return (
     <>
       <CssBaseline />
-      <AppBar position="sticky" sx={{ backgroundColor: "#172831" }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          backgroundColor: "#172831",
+          width: "100%",
+        }}
+      >
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={toggleDrawer}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={toggleDrawer}
+            sx={{ cursor: "pointer" }}
+          >
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -434,26 +617,77 @@ const AdminDashboard = () => {
         </Toolbar>
       </AppBar>
       {renderDrawer()}
-      <Box sx={{ p: 3, backgroundColor: "#f7f7f7" }}>
+      <Box
+        sx={{
+          p: 3,
+          mt: 8,
+          backgroundColor: "#f7f7f7",
+          minHeight: "100vh",
+        }}
+      >
         {currentPage === "Create Product"
           ? renderCreateProductForm()
           : renderViewProducts()}
       </Box>
 
       {/* Edit Modal */}
-      <Modal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+      <Modal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Box
           sx={{
             p: 3,
             maxWidth: 600,
-            mx: "auto",
+            width: "90%",
             bgcolor: "white",
             borderRadius: 2,
           }}
         >
-          {renderCreateProductForm(true)} {/* Pass 'true' for Edit Mode */}
+          {renderCreateProductForm(true)}
         </Box>
       </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{productToDelete?.title}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+          <Button color="error" onClick={handleDeleteProduct}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
