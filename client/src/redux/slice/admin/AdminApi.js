@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import API from "../../../config/Api";
-import { getToken } from "../../../utils/Cookies";
 
 const intialState = {
   admins: [],
@@ -79,7 +78,8 @@ const AdminSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(getAdminById.fulfilled, (state, { payload }) => {
-        state.admin = payload;
+        state.admin = payloa
+        d;
         state.isLoading = false;
       })
       .addCase(getAdminById.rejected, (state, { payload }) => {

@@ -73,15 +73,16 @@ const RoleBadge = styled(Chip)(({ role }) => ({
 }));
 
 const Profile = ({ user, ...stats }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
   const getRoleData = () => {
-    switch (user.role) {
-      case "Admin":
+    switch (user.role.toLowerCase()) {
+      case "admin":
         return {
           icon: <ShoppingBag sx={{ color: COLORS.primary, fontSize: 40 }} />,
           label: "Total Created Products",
           value: stats.totalCreatedProducts,
         };
-      case "SuperAdmin":
+      case "superadmin":
         return {
           icon: <AccessTime sx={{ color: COLORS.primary, fontSize: 40 }} />,
           label: "Pending Approvals",
@@ -103,7 +104,7 @@ const Profile = ({ user, ...stats }) => {
       <CardContent>
         {/* Profile Image Section */}
         <Box sx={{ textAlign: "center", mb: 4 }}>
-          <ProfileAvatar src={user.profileImage}>
+          <ProfileAvatar src={`${API_URL}/${user.profileImage}`}>
             {!user.profileImage && <Person fontSize="large" />}
           </ProfileAvatar>
         </Box>
@@ -141,7 +142,7 @@ const Profile = ({ user, ...stats }) => {
               Member Since
             </Typography>
             <Typography variant="h5" color={COLORS.primary}>
-              2023
+              2025
             </Typography>
           </StatsCard>
         </Stack>

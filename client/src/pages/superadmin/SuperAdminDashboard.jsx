@@ -670,8 +670,20 @@ const ProductManagement = () => {
 const SuperAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState(2); // Default to User Management
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const loggedInAdmin = useSelector((state) => state.userReducer.user.username);
+  const loggedInAdmin = useSelector((state) => state.userReducer.user);
+  const { products } = useSelector((state) => state.productReducer);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getAllProducts());
+  }, [dispatch]);
+
+  const findPendingApprovalsProduct= ()=>{
+    let count  = 0;
+    products.forEach(product => {
+      product.isVerified
+    });
+  }
 
   const toggleDrawer = () => {
     setDrawerOpen((prevState) => !prevState);
@@ -681,7 +693,7 @@ const SuperAdminDashboard = () => {
     <Box sx={{ display: "flex" }}>
       <Header
         toggleDrawer={toggleDrawer}
-        loggedInAdmin={loggedInAdmin}
+        loggedInAdmin={loggedInAdmin.username}
         onLogout={() => dispatch(logout())}
       />
       <DrawerNavigation
@@ -707,12 +719,12 @@ const SuperAdminDashboard = () => {
           // </Typography>
           <Profile
           user={{
-            username: "John Doe",
-            email: "john@ecommerce.com",
-            role: "Admin",
-            profileImage: "/path/to/image.jpg",
+            username: loggedInAdmin.username,
+            email: loggedInAdmin.email,
+            role: loggedInAdmin.role,
+            profileImage: loggedInAdmin.profile,
           }}
-          totalCreatedProducts={42}
+          // pendingApprovalProducts={}
           />
         )}
         {activeTab === 2 && <UserManagement />}
