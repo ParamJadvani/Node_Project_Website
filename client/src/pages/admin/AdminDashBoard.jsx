@@ -48,6 +48,8 @@ import {
   deleteProduct,
 } from "../../redux/slice/product/ProductApi";
 import { logout } from "../../redux/slice/auth/AuthApi";
+import Profile from "../../Components/Profile";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const drawerWidth = 240;
 
@@ -55,6 +57,7 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.productReducer);
   const API_URL = import.meta.env.VITE_API_URL;
+  const loggedInAdmin = useSelector((state) => state.userReducer.user);
 
   // State management
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -344,7 +347,7 @@ const AdminDashboard = () => {
   );
 
   const renderViewProducts = () => {
-    const filteredProducts = allProducts.filter((product) =>
+    const filteredProducts = products?.filter((product) =>
       product.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -564,10 +567,14 @@ const AdminDashboard = () => {
           <ListItem
             button
             onClick={() => {
-              // Placeholder for Profile page; add your profile navigation logic here.
+              setCurrentPage("Profile"); // navigate to Profile page
               toggleDrawer();
             }}
-            sx={{ cursor: "pointer" }}
+            sx={{
+              backgroundColor:
+                currentPage === "Profile" ? "#1e88e5" : "inherit",
+              cursor: "pointer",
+            }}
           >
             <ListItemIcon>
               <PersonIcon sx={{ color: "white" }} />
@@ -592,6 +599,25 @@ const AdminDashboard = () => {
     </Drawer>
   );
 
+  const renderMainContent = () => {
+    if (currentPage === "Create Product") {
+      return renderCreateProductForm();
+    } else if (currentPage === "View Products") {
+      return renderViewProducts();
+    } else if (currentPage === "Profile") {
+      return (
+        <Profile
+          user={{
+            username: loggedInAdmin.username,
+            email: loggedInAdmin.email,
+            role: loggedInAdmin.role,
+            profileImage: loggedInAdmin.profile,
+          }}
+        />
+      );
+    }
+  };
+
   return (
     <>
       <CssBaseline />
@@ -614,6 +640,21 @@ const AdminDashboard = () => {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Admin Dashboard
           </Typography>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Typography variant="subtitle1" sx={{ mr: 2 }}>
+              {loggedInAdmin.username}
+            </Typography>
+            <IconButton
+              color="inherit"
+              onClick={() => {
+                dispatch(logout());
+                toggleDrawer();
+              }}
+              sx={{ cursor: "pointer" }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
       {renderDrawer()}
@@ -625,9 +666,7 @@ const AdminDashboard = () => {
           minHeight: "100vh",
         }}
       >
-        {currentPage === "Create Product"
-          ? renderCreateProductForm()
-          : renderViewProducts()}
+        {renderMainContent()}
       </Box>
 
       {/* Edit Modal */}

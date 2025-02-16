@@ -99,7 +99,7 @@ const ProductDetailPage = () => {
               </Typography>
 
               {/* Product Rating */}
-              <Stack direction="row" alignItems="center" sx={{ my: 2 }}>
+              {/* <Stack direction="row" alignItems="center" sx={{ my: 2 }}>
                 <Rating
                   value={
                     product?.ratings.reduce(
@@ -114,7 +114,7 @@ const ProductDetailPage = () => {
                   {product?.ratings.length}{" "}
                   {product?.ratings.length === 1 ? "Review" : "Reviews"}
                 </Typography>
-              </Stack>
+              </Stack> */}
 
               {/* Product Availability */}
               <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
@@ -212,41 +212,7 @@ const ProductDetailPage = () => {
         </Card>
       </Box>
 
-      {/* Suggested Products Section */}
-      <Box sx={{ mt: 6 }}>
-        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2 }}>
-          Suggested Products
-        </Typography>
-        <Grid container spacing={4}>
-          {/* Example of other products (static for now, you can replace it with real data) */}
-          {[1, 2, 3].map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item}>
-              <Card sx={{ borderRadius: 3, boxShadow: 6 }}>
-                <Box
-                  component="img"
-                  src="/default-image.jpg"
-                  alt="Suggested Product"
-                  sx={{
-                    width: "100%",
-                    height: 200,
-                    objectFit: "contain",
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                  }}
-                />
-                <CardContent>
-                  <Typography variant="h6">Suggested Product {item}</Typography>
-                  <Typography variant="body2" sx={{ color: "#7f8c8d", mb: 2 }}>
-                    $49.99
-                  </Typography>
-                  <Button variant="outlined" fullWidth>
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      
     </Box>
   );
 };

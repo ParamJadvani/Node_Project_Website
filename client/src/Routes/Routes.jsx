@@ -10,7 +10,10 @@ import PrivateRoute from "./PrivateRoute";
 import { useDispatch, useSelector } from "react-redux";
 import Alert from "../components/Alert";
 import { logout } from "../redux/slice/auth/AuthApi";
-import ProductDetailPage from "../Components/ProductDetailPage";
+import ProductDetailPage from "../Components/Product/ProductDetailPage";
+import Product from "../Components/Product/Product";
+import Profile from "../Components/Profile";
+import Cart from "../Components/Cart";
 
 const Routes = () => {
   const navigate = useNavigate();
@@ -43,6 +46,9 @@ const Routes = () => {
         <Route path="/signup/user" element={<UserSignup />} />
         <Route path="/signup/admin" element={<AdminSignup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="products" element={<Product />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/cart" element={<Cart/>}/>
 
         {/* Private Routes */}
         <Route

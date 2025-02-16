@@ -42,7 +42,8 @@ const loginAccount = createAsyncThunk(
   async (loginData, { rejectWithValue }) => {
     try {
       const res = await API.post("/user/login", loginData);
-      if (res.data.user.isActive) {
+      console.log(res.data);
+      if (res.data) {
         setToken(res.data.token);
         res.data.isActive = res.data.user.isActive;
         delete res.data.user.isActive;
@@ -51,7 +52,8 @@ const loginAccount = createAsyncThunk(
         return rejectWithValue("Your account is not activated.");
       }
     } catch (error) {
-      rejectWithValue(error.response.data.message);
+      console.log(error.response.data.message);
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -86,6 +88,7 @@ const userSlice = createSlice({
       })
       .addCase(loginAccount.pending, (state, { payload }) => {
         state.isLoading = true;
+        state.error = payload;
       })
       .addCase(loginAccount.fulfilled, (state, { payload }) => {
         state.user = payload.user;

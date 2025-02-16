@@ -29,7 +29,8 @@ const Login = () => {
   const handleLoginSubmit = async (data) => {
     try {
       // Dispatch the login action and get the updated user data
-      const { user } = await dispatch(loginAccount(data)).unwrap();
+      const user = await dispatch(loginAccount(data)).unwrap();
+      console.log(user);
 
       // Show Success SweetAlert
       Alert({
@@ -48,6 +49,7 @@ const Login = () => {
         navigate("/"); // Default fallback
       }
     } catch (error) {
+      console.log(error);
       Alert({
         type: "error",
         message: error.toString() || "Login failed!",

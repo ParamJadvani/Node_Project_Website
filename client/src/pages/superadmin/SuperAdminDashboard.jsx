@@ -714,9 +714,6 @@ const SuperAdminDashboard = () => {
         {/* Offset the content from the fixed header */}
         <Toolbar />
         {activeTab === 1 && (
-          // <Typography variant="h6" sx={{ mb: 2 }}>
-          //   Profile Section (Coming Soon)
-          // </Typography>
           <Profile
           user={{
             username: loggedInAdmin.username,

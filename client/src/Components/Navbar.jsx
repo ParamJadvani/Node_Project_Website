@@ -12,6 +12,7 @@ import {
   ListItemIcon,
   ListItemText,
   useMediaQuery,
+  Badge,
 } from "@mui/material";
 import {
   FaBars,
@@ -20,6 +21,8 @@ import {
   FaUserPlus,
   FaUserCircle,
   FaSignOutAlt,
+  FaBox,
+  FaShoppingCart,
 } from "react-icons/fa";
 import { useTheme } from "@mui/material/styles";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,27 +34,31 @@ const Navbar = () => {
   const [openDrawer, setOpenDrawer] = React.useState(false);
 
   const { isLogin } = useSelector((store) => store.userReducer);
+  const { cart } = useSelector((store) => store.cartReducer); // Access cart items
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Used for navigation after logout
-
-  const isLoggedIn = isLogin;
-
-  const navLinks = isLoggedIn
-    ? [{ to: "/profile", icon: <FaUserCircle />, text: "Profile" }]
-    : [
-        { to: "/", icon: <FaHome />, text: "Home" },
-        { to: "/login", icon: <FaSignInAlt />, text: "Login" },
-        { to: "/signup/user", icon: <FaUserPlus />, text: "Signup" },
-      ];
+  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setOpenDrawer(!openDrawer);
   };
 
   const handleLogout = () => {
-    dispatch(logout()); // Dispatch the logout action
-    navigate("/login"); // Redirect to home or login page after logout
+    dispatch(logout());
+    navigate("/login");
   };
+
+  // Navigation links
+  const navLinks = isLogin
+    ? [
+        { to: "/profile", icon: <FaUserCircle />, text: "Profile" },
+        { to: "/products", icon: <FaBox />, text: "Products" },
+        { to: "/cart", icon: <FaShoppingCart />, text: "Cart" },
+      ]
+    : [
+        { to: "/", icon: <FaHome />, text: "Home" },
+        { to: "/login", icon: <FaSignInAlt />, text: "Login" },
+        { to: "/signup/user", icon: <FaUserPlus />, text: "Signup" },
+      ];
 
   const navLinkItems = navLinks.map(({ to, icon, text }) => (
     <ListItem
@@ -65,7 +72,7 @@ const Navbar = () => {
           color: theme.palette.primary.contrastText,
           transform: "scale(1.1)",
           transition: "transform 0.3s ease, background-color 0.3s ease",
-          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)", // Subtle shadow on hover
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
         },
       }}
     >
@@ -94,9 +101,8 @@ const Navbar = () => {
 
   return (
     <>
-      {/* AppBar without sticky */}
       <AppBar
-        position="relative" // Change this to 'relative' or remove it entirely
+        position="relative"
         sx={{
           backgroundColor: theme.palette.primary.main,
           boxShadow: "0px 6px 24px rgba(0, 0, 0, 0.12)",
@@ -108,7 +114,6 @@ const Navbar = () => {
         }}
       >
         <Toolbar>
-          {/* Logo or title */}
           <Typography
             variant="h6"
             sx={{
@@ -127,9 +132,9 @@ const Navbar = () => {
             MyApp
           </Typography>
 
-          {/* Desktop NavLinks */}
+          {/* Desktop Navigation */}
           {!isMobile && (
-            <Box display="flex">
+            <Box display="flex" alignItems="center">
               {navLinks.map(({ to, icon, text }) => (
                 <Box
                   key={text}
@@ -141,13 +146,10 @@ const Navbar = () => {
                     textDecoration: "none",
                     color: theme.palette.primary.contrastText,
                     padding: "8px 16px",
-                    position: "relative",
-                    overflow: "hidden",
-                    borderRadius: "8px", // Adds button-like rounded corners
+                    borderRadius: "8px",
                     "&:hover": {
                       color: theme.palette.primary.main,
                       backgroundColor: "white",
-                      textDecoration: "none",
                       transform: "scale(1.05)",
                     },
                     transition:
@@ -160,15 +162,33 @@ const Navbar = () => {
                     sx={{
                       marginLeft: "8px",
                       fontWeight: 500,
-                      transition: "color 0.3s ease",
                     }}
                   >
                     {text}
                   </Typography>
                 </Box>
               ))}
-              {/* Render Logout link separately */}
-              {isLoggedIn && (
+
+              {/* Cart with Badge */}
+              {isLogin && (
+                <IconButton
+                  component={Link}
+                  to="/cart"
+                  sx={{
+                    color: theme.palette.primary.contrastText,
+                    "&:hover": {
+                      color: theme.palette.secondary.light,
+                    },
+                  }}
+                >
+                  <Badge badgeContent={cart?.length || 0} color="secondary">
+                    <FaShoppingCart />
+                  </Badge>
+                </IconButton>
+              )}
+
+              {/* Logout Button */}
+              {isLogin && (
                 <Box
                   key="Logout"
                   component="div"
@@ -178,13 +198,10 @@ const Navbar = () => {
                     textDecoration: "none",
                     color: theme.palette.primary.contrastText,
                     padding: "8px 16px",
-                    position: "relative",
-                    overflow: "hidden",
-                    borderRadius: "8px", // Adds button-like rounded corners
+                    borderRadius: "8px",
                     "&:hover": {
                       color: theme.palette.primary.main,
                       backgroundColor: "white",
-                      textDecoration: "none",
                       transform: "scale(1.05)",
                     },
                     transition:
@@ -198,7 +215,6 @@ const Navbar = () => {
                     sx={{
                       marginLeft: "8px",
                       fontWeight: 500,
-                      transition: "color 0.3s ease",
                     }}
                   >
                     Logout
@@ -208,7 +224,7 @@ const Navbar = () => {
             </Box>
           )}
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu */}
           {isMobile && (
             <IconButton
               color="inherit"
@@ -235,14 +251,13 @@ const Navbar = () => {
         PaperProps={{
           sx: {
             width: 250,
-            background: `linear-gradient(45deg, ${theme.palette.primary.light}, white})`,
+            background: `linear-gradient(45deg, ${theme.palette.primary.light}, white)`,
           },
         }}
       >
         <Box sx={{ padding: "16px" }}>
           <List>{navLinkItems}</List>
-          {/* Render Logout in the drawer for mobile view */}
-          {isLoggedIn && (
+          {isLogin && (
             <ListItem button key="Logout" onClick={handleLogout}>
               <ListItemIcon>
                 <FaSignOutAlt />

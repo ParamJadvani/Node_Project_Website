@@ -4,16 +4,16 @@ const {
   updateQuantity,
   deleteFromCart,
 } = require("../controllers/cart.controller");
-const { isAdmin } = require("../middlewares/role");
+const { verifyToken } = require("../middlewares/JWT_AUTH");
 
 const cartRouter = require("express").Router();
 
-cartRouter.get("/user", getCartByUserId);
+cartRouter.get("/user", verifyToken, getCartByUserId);
 
-cartRouter.post("/", isAdmin, addToCart);
+cartRouter.post("/", verifyToken, addToCart);
 
-cartRouter.patch("/:cartId/qty", updateQuantity);
+cartRouter.patch("/:cartId/qty", verifyToken, updateQuantity);
 
-cartRouter.delete("/:cartId", deleteFromCart);
+cartRouter.delete("/:cartId", verifyToken, deleteFromCart);
 
 module.exports = cartRouter;
